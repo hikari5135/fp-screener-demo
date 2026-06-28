@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FPナビ診断書の見方｜顧客向けガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.8}
+.page{max-width:720px;margin:0 auto;background:var(--white);min-height:100vh}
+.cover{background:linear-gradient(150deg,var(--navy),#243460);padding:56px 48px;text-align:center;position:relative}
+.cover-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:16px}
+.cover h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.5;margin-bottom:12px}
+.cover h1 em{color:var(--gold);font-style:normal}
+.cover p{color:rgba(255,255,255,.65);font-size:13px;margin-bottom:28px}
+.cover-fp-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:16px 20px;text-align:left;max-width:400px;margin:0 auto}
+.cover-fp-label{font-size:10px;color:var(--gold);letter-spacing:.15em;margin-bottom:8px}
+.cover-fp-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.cover-fp-info{font-size:12px;color:rgba(255,255,255,.6)}
+.content{padding:36px 48px 56px}
+.section{margin-bottom:40px}
+.section-num{font-size:10px;color:var(--gold);letter-spacing:.2em;margin-bottom:6px;font-weight:700}
+.section h2{font-family:"Noto Serif JP",serif;font-size:20px;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--gold)}
+.section h3{font-size:15px;font-weight:700;color:var(--navy);margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--gold)}
+.section p{font-size:13px;color:var(--text);line-height:1.9;margin-bottom:10px}
+.score-example{background:var(--navy);border-radius:12px;padding:24px;margin:16px 0;color:#fff;text-align:center}
+.score-example-label{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.15em;margin-bottom:8px}
+.score-example-num{font-family:"Noto Serif JP",serif;font-size:64px;font-weight:700;color:var(--gold);line-height:1}
+.score-example-stars{font-size:18px;color:var(--gold);margin:6px 0}
+.score-example-rank{display:inline-block;background:rgba(200,169,110,.25);color:var(--gold);font-size:12px;font-weight:700;padding:3px 14px;border-radius:20px}
+.rank-table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.rank-table th{background:var(--navy);color:#fff;padding:10px 14px;text-align:left;font-size:12px}
+.rank-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.rank-table tr:last-child td{border-bottom:none}
+.rank-s{color:#c8a96e;font-weight:700}
+.rank-a{color:#2a7a4f;font-weight:700}
+.rank-b{color:#f39c12;font-weight:700}
+.rank-c{color:#c0392b;font-weight:700}
+.tip-box{background:var(--green-light);border-left:4px solid var(--green);padding:14px 18px;margin:14px 0;font-size:13px;color:var(--text);line-height:1.8}
+.tip-box strong{color:var(--green)}
+.action-list{list-style:none;margin:12px 0}
+.action-list li{padding:10px 14px;margin-bottom:8px;border-radius:6px;font-size:13px;display:flex;align-items:flex-start;gap:10px;line-height:1.7}
+.action-list li.high{background:var(--red-light);border:1px solid var(--red)}
+.action-list li.mid{background:#fef9e7;border:1px solid #f39c12}
+.action-list li.low{background:var(--green-light);border:1px solid var(--green)}
+.action-icon{flex-shrink:0;font-size:16px;margin-top:1px}
+.tools-list{list-style:none;margin:12px 0}
+.tools-list li{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.tools-list li:last-child{border-bottom:none}
+.tool-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.tool-name{font-weight:700;color:var(--navy);width:130px;flex-shrink:0}
+.tool-desc{color:var(--muted)}
+.disclaimer-box{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:32px;font-size:11px;color:var(--muted);line-height:1.8}
+.next-step{background:var(--navy);border-radius:12px;padding:22px 24px;margin:24px 0;color:#fff}
+.next-step-title{font-size:11px;color:var(--gold);letter-spacing:.15em;margin-bottom:10px}
+.next-step-text{font-size:14px;font-weight:500;line-height:1.9}
+@media print{
+  body{background:#fff}
+  .page{box-shadow:none}
+  .section{page-break-inside:avoid}
+}
+@media(max-width:640px){
+  .content{padding:24px}
+  .cover{padding:40px 24px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 表紙 -->
+  <div class="cover">
+    <div class="cover-badge">FINANCIAL PLANNING REPORT</div>
+    <h1>FPナビ診断書の<em>見方ガイド</em></h1>
+    <p>このガイドは、FP面談でお渡しした診断書の<br>見方・活用方法をご説明するものです。</p>
+    <div class="cover-fp-box">
+      <div class="cover-fp-label">担当FP</div>
+      <div class="cover-fp-name">阪本 光 FP</div>
+      <div class="cover-fp-info">一般社団法人人材育成支援機構<br>ひかりFP相談室</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- S1 スコアの見方 -->
+    <div class="section" id="s1">
+      <div class="section-num">SECTION 01</div>
+      <h2>スコアの見方</h2>
+      <p>FPナビの診断では、あなたの財務状況を<strong>100点満点でスコアリング</strong>しています。点数が高いほど現在の状況が安定していることを示します。</p>
+
+      <div class="score-example">
+        <div class="score-example-label">家計健全度スコア（サンプル）</div>
+        <div class="score-example-num">76</div>
+        <div class="score-example-stars">★★★★☆</div>
+        <div class="score-example-rank">Aランク：優秀</div>
+      </div>
+
+      <table class="rank-table">
+        <thead><tr><th>スコア</th><th>ランク</th><th>状況の目安</th></tr></thead>
+        <tbody>
+          <tr><td class="rank-s">90〜100点</td><td class="rank-s">Sランク：最優秀</td><td>非常に優れた財務状況。このペースを維持しましょう。</td></tr>
+          <tr><td class="rank-a">75〜89点</td><td class="rank-a">Aランク：優秀</td><td>良好な状況。一部の改善でさらに安心が増します。</td></tr>
+          <tr><td class="rank-b">60〜74点</td><td class="rank-b">Bランク：標準</td><td>概ね問題ありませんが、改善の余地があります。</td></tr>
+          <tr><td class="rank-c">〜59点</td><td class="rank-c">Cランク：要改善</td><td>重要な課題があります。早めの対策をおすすめします。</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip-box"><strong>大切なこと</strong>：スコアはあくまで現在の状況を把握するための目安です。点数が低くても、今から対策を始めることで大きく改善できます。</div>
+    </div>
+
+    <!-- S2 診断書の構成 -->
+    <div class="section" id="s2">
+      <div class="section-num">SECTION 02</div>
+      <h2>診断書の構成</h2>
+      <p>FP面談でお渡しする診断書には、以下の内容が含まれています。</p>
+
+      <h3>① スコアと評価</h3>
+      <p>100点満点のスコアとS〜Cのランクで、現在の状況を一目で把握できます。</p>
+
+      <h3>② AI診断コメント</h3>
+      <p>あなたの状況に合わせたアドバイスが自動生成されます。担当FPが内容を確認・調整した上でお渡ししています。</p>
+
+      <h3>③ グラフ・チャート</h3>
+      <p>資産の推移・支出の内訳・保障のバランスなどをグラフで視覚化しています。数字が苦手な方でも直感的に理解できます。</p>
+
+      <h3>④ 改善アクションプラン</h3>
+      <p>スコアに基づいて、優先度の高い改善項目を自動提示しています。「最優先」「推奨」「維持」の3段階で整理されています。</p>
+
+      <h3>⑤ 次のステップ</h3>
+      <p>担当FPから次回面談・具体的な提案への誘導文が記載されています。</p>
+    </div>
+
+    <!-- S3 各診断書について -->
+    <div class="section" id="s3">
+      <div class="section-num">SECTION 03</div>
+      <h2>8つの診断について</h2>
+      <ul class="tools-list">
+        <li><span class="tool-icon">📊</span><span class="tool-name">ライフプラン</span><span class="tool-desc">老後資金が足りるかを試算。65歳時の推定資産と不足額を確認できます。</span></li>
+        <li><span class="tool-icon">🛡️</span><span class="tool-name">保険見直し</span><span class="tool-desc">現在の保険の過不足を診断。必要な保障額の目安が分かります。</span></li>
+        <li><span class="tool-icon">🏠</span><span class="tool-name">住宅ローン</span><span class="tool-desc">変動・固定金利の比較と繰り上げ返済の効果を試算します。</span></li>
+        <li><span class="tool-icon">📜</span><span class="tool-name">相続税</span><span class="tool-desc">相続税の概算と節税できる金額の目安が分かります。</span></li>
+        <li><span class="tool-icon">💰</span><span class="tool-name">家計健全度</span><span class="tool-desc">家計の黒字・赤字と支出バランスを100点満点で診断します。</span></li>
+        <li><span class="tool-icon">🎓</span><span class="tool-name">教育費</span><span class="tool-desc">幼稚園から大学までの総費用と毎月の積立額が分かります。</span></li>
+        <li><span class="tool-icon">🏦</span><span class="tool-name">老後資金</span><span class="tool-desc">年金との差額と必要な積立額を具体的な金額で示します。</span></li>
+        <li><span class="tool-icon">📈</span><span class="tool-name">NISA試算</span><span class="tool-desc">積立額を増やすと老後資産がどう変わるかを比較します。</span></li>
+      </ul>
+    </div>
+
+    <!-- S4 次のステップ -->
+    <div class="section" id="s4">
+      <div class="section-num">SECTION 04</div>
+      <h2>診断書を受け取ったら</h2>
+
+      <h3>スコアに応じた行動の目安</h3>
+      <ul class="action-list">
+        <li class="high"><span class="action-icon">🚨</span><div><strong>Cランク（〜59点）の項目がある場合</strong><br>早めの対策が必要です。担当FPとの次回面談で具体的な改善プランを作りましょう。</div></li>
+        <li class="mid"><span class="action-icon">⚠️</span><div><strong>Bランク（60〜74点）の項目がある場合</strong><br>改善の余地があります。優先度の高い項目から順番に対策を進めましょう。</div></li>
+        <li class="low"><span class="action-icon">✅</span><div><strong>A・Sランク（75点以上）の項目</strong><br>良好な状態です。このペースを維持しながら、さらなる最適化を検討しましょう。</div></li>
+      </ul>
+
+      <div class="tip-box"><strong>大切なこと</strong>：診断書はあくまで「現状把握」のツールです。スコアを見て不安になる必要はありません。担当FPが一緒に改善プランを考えます。気になる点はお気軽にご相談ください。</div>
+
+      <div class="next-step">
+        <div class="next-step-title">📞 次のステップ</div>
+        <div class="next-step-text">診断結果についてご不明な点・ご相談がございましたら、担当FPまでお気軽にご連絡ください。次回面談で具体的な改善プランをご提案します。</div>
+      </div>
+    </div>
+
+    <div class="disclaimer-box">
+      【重要】本診断書はFPナビ Life Planning Suiteによる参考情報の提供を目的とした概算ツールの出力結果です。実際の金額・税額は個人の状況・税制・市場環境により異なります。投資助言・保険推奨・税務申告の代替となるものではありません。詳細は担当FP・税理士・保険代理店にご相談ください。
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

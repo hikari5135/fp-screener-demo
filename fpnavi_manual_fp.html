@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FP向け操作マニュアル｜FPナビ Life Planning Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.8}
+header{background:var(--navy);padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}
+.brand span{color:rgba(255,255,255,.5);font-size:10px;display:block;letter-spacing:.15em}
+.btn-print{background:var(--gold);border:none;color:var(--navy);padding:7px 16px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:40px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:26px;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero p{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:900px;margin:0 auto;padding:40px 24px 80px}
+.toc{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:36px}
+.toc-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.toc-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.toc-list a{font-size:13px;color:var(--navy);text-decoration:none;padding:4px 0;display:block}
+.toc-list a:hover{color:var(--gold)}
+.section{margin-bottom:48px}
+.section-num{font-size:10px;color:var(--gold);letter-spacing:.2em;margin-bottom:6px;font-weight:700}
+.section h2{font-family:"Noto Serif JP",serif;font-size:22px;color:var(--navy);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold)}
+.section h3{font-size:16px;font-weight:700;color:var(--navy);margin:20px 0 10px;padding-left:12px;border-left:3px solid var(--gold)}
+.section p{font-size:14px;color:var(--text);line-height:1.9;margin-bottom:12px}
+.steps{counter-reset:step}
+.step{display:flex;gap:16px;margin-bottom:16px;align-items:flex-start}
+.step-num{background:var(--navy);color:var(--gold);font-family:"Noto Serif JP",serif;font-size:16px;font-weight:700;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-content{flex:1}
+.step-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.8}
+.tip-box{background:var(--green-light);border:1px solid var(--green);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13px;color:var(--text);line-height:1.8}
+.tip-box strong{color:var(--green);font-weight:700}
+.warn-box{background:#fdf0ee;border:1px solid var(--red);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13px;color:var(--text);line-height:1.8}
+.warn-box strong{color:var(--red);font-weight:700}
+.tools-table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;background:var(--white);border-radius:8px;overflow:hidden}
+.tools-table th{background:var(--navy);color:var(--white);padding:10px 14px;text-align:left;font-size:12px}
+.tools-table td{padding:10px 14px;border-bottom:1px solid var(--border);line-height:1.7}
+.tools-table tr:last-child td{border-bottom:none}
+.tools-table tr:nth-child(even) td{background:var(--cream)}
+.badge-green{display:inline-block;background:var(--green-light);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.badge-gold{display:inline-block;background:rgba(200,169,110,.15);color:#9a7030;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.flow{display:flex;align-items:center;gap:0;margin:16px 0;flex-wrap:wrap}
+.flow-item{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;text-align:center;flex:1;min-width:120px}
+.flow-item-num{font-size:10px;color:var(--muted);margin-bottom:4px}
+.flow-item-text{font-weight:700;color:var(--navy)}
+.flow-arrow{color:var(--gold);font-size:20px;padding:0 8px;flex-shrink:0}
+.shortcut-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.shortcut-item{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.shortcut-key{background:var(--navy);color:var(--white);font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.shortcut-desc{font-size:12px;color:var(--muted)}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media print{header,.btn-print,footer{display:none!important}body{background:#fff}.main{padding:0}.section{page-break-inside:avoid}}
+@media(max-width:640px){.toc-list{grid-template-columns:1fr}.flow{flex-direction:column}.flow-arrow{transform:rotate(90deg)}.shortcut-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">FPナビ<span>LIFE PLANNING SUITE</span></div>
+  <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">FP OPERATION MANUAL</div>
+  <h1>FP向け<em>操作マニュアル</em></h1>
+  <p>FPナビ Life Planning Suite ― 面談で即使えるツールキットの完全ガイド</p>
+</div>
+
+<div class="main">
+
+  <!-- 目次 -->
+  <div class="toc">
+    <div class="toc-title">📋 目次</div>
+    <ul class="toc-list">
+      <li><a href="#s1">1. FPナビとは</a></li>
+      <li><a href="#s2">2. 基本的な使い方</a></li>
+      <li><a href="#s3">3. 面談での活用フロー</a></li>
+      <li><a href="#s4">4. 各ツールの使い方</a></li>
+      <li><a href="#s5">5. PDF出力・印刷の方法</a></li>
+      <li><a href="#s6">6. データ保存・引き継ぎ</a></li>
+      <li><a href="#s7">7. FP事務所情報の設定</a></li>
+      <li><a href="#s8">8. よくある質問</a></li>
+    </ul>
+  </div>
+
+  <!-- S1 -->
+  <div class="section" id="s1">
+    <div class="section-num">SECTION 01</div>
+    <h2>FPナビとは</h2>
+    <p>FPナビ Life Planning Suiteは、独立FP・小規模FP事務所向けに設計された<strong>8つの診断ツール＋総合レポート</strong>のキットです。面談中にヒアリングしながら入力するだけで、100点満点のスコアと美しいPDFレポートが自動生成されます。</p>
+    <table class="tools-table">
+      <thead><tr><th>#</th><th>ツール名</th><th>こんな時に使う</th><th>面談時間</th></tr></thead>
+      <tbody>
+        <tr><td>TOP</td><td>FP総合レポート</td><td>面談の締め・全体スコアを渡したい時</td><td><span class="badge-gold">5分</span></td></tr>
+        <tr><td>①</td><td>ライフプラン診断</td><td>初回面談・老後資金の危機感を伝えたい時</td><td><span class="badge-green">3〜10分</span></td></tr>
+        <tr><td>②</td><td>保険見直し診断</td><td>保険の過不足を数字で示したい時</td><td><span class="badge-green">3〜8分</span></td></tr>
+        <tr><td>③</td><td>住宅ローン比較</td><td>変動vs固定・繰り上げ返済を比較したい時</td><td><span class="badge-green">3〜8分</span></td></tr>
+        <tr><td>④</td><td>相続税診断</td><td>相続税の概算と節税効果を示したい時</td><td><span class="badge-green">3〜8分</span></td></tr>
+        <tr><td>⑤</td><td>家計健全度診断</td><td>家計の黒字・赤字と改善点を伝えたい時</td><td><span class="badge-green">3〜10分</span></td></tr>
+        <tr><td>⑥</td><td>教育費シミュレーター</td><td>子どもの教育費と積立額を試算したい時</td><td><span class="badge-green">3〜5分</span></td></tr>
+        <tr><td>⑦</td><td>老後資金診断</td><td>不足額と必要な積立額を示したい時</td><td><span class="badge-green">3〜8分</span></td></tr>
+        <tr><td>⑧</td><td>NISA試算診断</td><td>積立を増やす効果を比較して見せたい時</td><td><span class="badge-green">3〜5分</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S2 -->
+  <div class="section" id="s2">
+    <div class="section-num">SECTION 02</div>
+    <h2>基本的な使い方</h2>
+    <h3>モード切替（簡易 / 詳細）</h3>
+    <p>各ツールの上部に<strong>「⚡ 簡易3分モード」「🔍 詳細30分モード」</strong>のボタンがあります。</p>
+    <div class="tip-box"><strong>簡易3分モード（推奨：初回面談）</strong>　基本的な項目だけで即座にスコアを出します。顧客に危機感を持ってもらうのに最適です。</div>
+    <div class="tip-box"><strong>詳細30分モード（推奨：2回目以降）</strong>　より詳細な項目を入力して精度の高い診断ができます。具体的なプラン提案に使います。</div>
+
+    <h3>AIコメントの編集</h3>
+    <p>AIが自動生成したコメントは、<strong>「✏️ 編集」ボタン</strong>をクリックして自由に書き換えられます。顧客の状況や自分の提案スタイルに合わせて調整してください。</p>
+    <p>また<strong>「AIトーン切替」</strong>で3種類から選べます：</p>
+    <div class="shortcut-grid">
+      <div class="shortcut-item"><span class="shortcut-key">標準</span><span class="shortcut-desc">バランス重視の表現</span></div>
+      <div class="shortcut-item"><span class="shortcut-key">マイルド</span><span class="shortcut-desc">寄り添う表現（不安な顧客向け）</span></div>
+      <div class="shortcut-item"><span class="shortcut-key">背中を押す</span><span class="shortcut-desc">やや厳しめの表現（行動を促したい時）</span></div>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="section" id="s3">
+    <div class="section-num">SECTION 03</div>
+    <h2>面談での活用フロー</h2>
+    <h3>初回面談（60分）での使い方</h3>
+    <div class="flow">
+      <div class="flow-item"><div class="flow-item-num">STEP 1</div><div class="flow-item-text">⑤家計診断<br><small style="font-weight:400;color:#6b7a99">収支の全体像を把握</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 2</div><div class="flow-item-text">①ライフプラン<br><small style="font-weight:400;color:#6b7a99">老後の危機感を数字で</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 3</div><div class="flow-item-text">総合レポート<br><small style="font-weight:400;color:#6b7a99">スコアをまとめて渡す</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 4</div><div class="flow-item-text">PDF出力<br><small style="font-weight:400;color:#6b7a99">お土産として手渡し</small></div></div>
+    </div>
+    <div class="tip-box"><strong>ポイント</strong>：まず家計診断で「毎月いくら余裕があるか」を把握し、次にライフプランで「老後にいくら足りないか」を示すと、顧客自身が「なんとかしなければ」と気づきます。</div>
+
+    <h3>2回目以降の面談での使い方</h3>
+    <div class="flow">
+      <div class="flow-item"><div class="flow-item-num">STEP 1</div><div class="flow-item-text">前回データを読込<br><small style="font-weight:400;color:#6b7a99">「保存データ」から選択</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 2</div><div class="flow-item-text">詳細モードで深堀り<br><small style="font-weight:400;color:#6b7a99">②〜⑧の専門診断</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 3</div><div class="flow-item-text">総合スコアを比較<br><small style="font-weight:400;color:#6b7a99">前回との改善を確認</small></div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="flow-item-num">STEP 4</div><div class="flow-item-text">PDF出力・手渡し<br><small style="font-weight:400;color:#6b7a99">次回面談の予約へ</small></div></div>
+    </div>
+  </div>
+
+  <!-- S4 -->
+  <div class="section" id="s4">
+    <div class="section-num">SECTION 04</div>
+    <h2>各ツールの使い方</h2>
+
+    <h3>① ライフプラン診断</h3>
+    <p>年齢・年収・支出・貯蓄を入力すると、65歳時の推定資産と資産が尽きる年齢をグラフで表示します。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：「資産が○○歳で尽きる」という数字を見せると顧客が驚きます。そこから「では毎月いくら積立すれば解消できるか」の話に自然につながります。</div>
+
+    <h3>② 保険見直し診断</h3>
+    <p>現在加入している保険の種類と保障額を入力すると、過不足をスコアリングします。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：スコアが低い項目が「次の提案」の入口になります。「死亡保障が不足している」と数字で示すことで、感覚的なアドバイスより説得力が増します。</div>
+
+    <h3>③ 住宅ローン比較診断</h3>
+    <p>借入額・期間・金利を入力すると変動vs固定の比較と繰り上げ返済効果を試算します。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：「毎年50万円繰り上げ返済すると利息が○○万円減る」という具体的な数字が顧客の行動を促します。</div>
+
+    <h3>④ 相続税診断</h3>
+    <p>遺産総額と相続人数を入力すると相続税の概算と節税効果を計算します。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：節税シミュレーション（生命保険・贈与・配偶者控除）の金額を具体的に示すことで、FP相談・税理士紹介への流れが作りやすくなります。</div>
+
+    <h3>⑤ 家計健全度診断</h3>
+    <p>収入・支出の各項目を入力すると100点満点のスコアとレーダーチャートで家計を診断します。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：「通信費が収入の○%で高め」「保険料の削減余地が月△△円」という具体的な数字が刺さります。まず家計を整えてから投資の話をするのが定石です。</div>
+
+    <h3>⑥ 教育費シミュレーター</h3>
+    <p>子どもの年齢と進路（公立/私立）を選択すると総費用と毎月の積立額を試算します。</p>
+
+    <h3>⑦ 老後資金診断</h3>
+    <p>公的年金と老後支出の差額から不足額を計算し「毎月○万円積立すれば解消」の解決策を提示します。</p>
+
+    <h3>⑧ NISA試算診断</h3>
+    <p>積立額を変えると老後資産がどう変わるかを比較表示します。</p>
+    <div class="tip-box"><strong>活用ポイント</strong>：「月3万円→5万円に増やすと老後資産が＋○○万円」という比較が顧客の積立増額を後押しします。</div>
+  </div>
+
+  <!-- S5 -->
+  <div class="section" id="s5">
+    <div class="section-num">SECTION 05</div>
+    <h2>PDF出力・印刷の方法</h2>
+
+    <h3>PDF出力</h3>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content"><div class="step-title">顧客名・面談日を入力する</div><div class="step-desc">PDFのヘッダーに自動反映されます。忘れずに入力しましょう。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content"><div class="step-title">AIコメントを確認・編集する</div><div class="step-desc">必要に応じて「✏️ 編集」ボタンでコメントを調整します。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content"><div class="step-title">「📄 PDF出力」ボタンをクリック</div><div class="step-desc">数秒待つと「○○様_診断名_FPナビ.pdf」というファイル名で自動ダウンロードされます。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content"><div class="step-title">印刷して顧客に手渡す</div><div class="step-desc">A4カラー印刷推奨。スコア・グラフ・FP事務所情報が1〜2枚にまとまります。</div></div>
+    </div>
+    <div class="warn-box"><strong>注意</strong>：PDF出力にはインターネット接続が必要です。オフライン環境では「🖨️ 印刷」ボタンをご利用ください。</div>
+
+    <h3>FP総合レポートのPDF出力</h3>
+    <p>8つのツールで診断後、<strong>FP総合レポート</strong>（fpnavi_report.html）を開き、各ツールのスコアを入力します。総合スコア・レーダーチャート・優先アクションプランが自動生成されます。</p>
+  </div>
+
+  <!-- S6 -->
+  <div class="section" id="s6">
+    <div class="section-num">SECTION 06</div>
+    <h2>データ保存・引き継ぎ</h2>
+
+    <h3>顧客データの保存</h3>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content"><div class="step-title">顧客名を入力する</div><div class="step-desc">「顧客名」欄に名前を入力します（例：山田 太郎 様）。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content"><div class="step-title">「💾 保存」ボタンをクリック</div><div class="step-desc">「顧客名_日付」のキーで自動保存されます。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content"><div class="step-title">次回は「保存データ」から読み込む</div><div class="step-desc">「保存データ」プルダウンから選択すると前回のデータが復元されます。</div></div>
+    </div>
+    <div class="warn-box"><strong>注意</strong>：データはブラウザのLocalStorageに保存されます。<strong>同じブラウザ・同じ端末</strong>でのみ引き継ぎが可能です。ブラウザの閲覧履歴を削除するとデータも消えます。大切なデータはPDFで保存しておくことをおすすめします。</div>
+
+    <h3>ツール間のデータ引き継ぎ</h3>
+    <p>ライフプランで「💾 保存」すると、年齢・年収などの基本情報が他のツールに自動引き継ぎされます。次のツールを開くと画面上部に<strong>緑色のバナー</strong>が表示され、「反映する」をクリックすると入力が自動補完されます。</p>
+  </div>
+
+  <!-- S7 -->
+  <div class="section" id="s7">
+    <div class="section-num">SECTION 07</div>
+    <h2>FP事務所情報の設定</h2>
+    <p>各ツールの上部に<strong>「⚙️ FP事務所情報」</strong>パネルがあります。ここに入力した情報はPDF出力時に自動反映されます。</p>
+    <table class="tools-table">
+      <thead><tr><th>項目</th><th>入力例</th><th>PDF上の表示場所</th></tr></thead>
+      <tbody>
+        <tr><td>事務所名・屋号</td><td>ひかりFP相談室</td><td>フッター・CTAボックス</td></tr>
+        <tr><td>担当FP名</td><td>阪本 光 FP</td><td>フッター・CTAボックス</td></tr>
+        <tr><td>連絡先</td><td>06-XXXX-XXXX</td><td>CTAボックス</td></tr>
+        <tr><td>次回面談への誘導文</td><td>詳しくは次回面談でプランを作成します</td><td>CTAボックス（PDF末尾）</td></tr>
+      </tbody>
+    </table>
+    <div class="tip-box"><strong>ポイント</strong>：「次回面談への誘導文」を入力しておくと、PDFの末尾に「次のステップ」ボックスが表示されます。顧客が帰宅後にPDFを見返した時に次のアクションを思い出させる効果があります。</div>
+  </div>
+
+  <!-- S8 -->
+  <div class="section" id="s8">
+    <div class="section-num">SECTION 08</div>
+    <h2>よくある質問</h2>
+
+    <h3>Q. スマートフォンでも使えますか？</h3>
+    <p>はい、スマートフォン・タブレットでも利用可能です。ただしPDF出力は画面サイズの関係でA4より少し崩れる場合があります。顧客への提案書はPC・タブレットでの出力をおすすめします。</p>
+
+    <h3>Q. オフラインでも使えますか？</h3>
+    <p>一度ページを読み込んだ後はオフラインでも診断・計算機能は利用できます。ただしPDF出力機能はCDNライブラリを使用するため、インターネット接続が必要です。オフラインでは「🖨️ 印刷」ボタンをご利用ください。</p>
+
+    <h3>Q. 計算の精度はどの程度ですか？</h3>
+    <p>あくまで概算ツールです。実際の金額は税制・個人の状況・市場環境により異なります。FP相談・専門家への依頼を促す「きっかけ」として活用してください。</p>
+
+    <h3>Q. 複数の顧客データを管理できますか？</h3>
+    <p>各ツールで顧客名をキーにして複数のデータを保存できます。「保存データ」プルダウンから選択して切り替えてください。ただし同一ブラウザ・端末内での管理となります。</p>
+
+    <h3>Q. 法改正があった場合はどうなりますか？</h3>
+    <p>NISA上限額・相続税率・基礎控除額などは現行制度（2026年）に基づいています。法改正があった場合はファイルの更新版をご確認ください。</p>
+  </div>
+
+</div>
+<footer>FPナビ Life Planning Suite ― FP向け操作マニュアル © 2026</footer>
+</body>
+</html>
