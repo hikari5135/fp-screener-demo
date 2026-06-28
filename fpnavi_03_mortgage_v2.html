@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>住宅ローン比較診断｜FPナビ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+// ===== FPナビ 共有データハブ =====
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const FPShared = {
+  // データ保存
+  save: function(data) {
+    const existing = FPShared.load();
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  },
+  // データ読込
+  load: function() {
+    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
+    catch(e) { return {}; }
+  },
+  // 共有バナー表示
+  showBanner: function(fields) {
+    const d = FPShared.load();
+    const matched = fields.filter(f => d[f]);
+    if (matched.length === 0) return;
+    const labels = {
+      clientName:'顧客名', age:'年齢', income:'年収',
+      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
+      children:'子ども人数', monthlyIncome:'月収入'
+    };
+    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
+    const banner = document.getElementById('shared-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
+        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
+        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
+    }
+  },
+  // フォームに値を適用（各ツールで上書き）
+  applyAll: function() {
+    const d = FPShared.load();
+    const apply = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== '') {
+        el.value = val;
+        // change/inputイベントを発火
+        el.dispatchEvent(new Event('input'));
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+    // 共通フィールド
+    if (d.clientName) apply('clientName', d.clientName);
+    if (d.age)        apply('age', d.age);
+    if (d.income)     apply('income', d.income);
+    if (d.expense)    apply('expense', d.expense);
+    if (d.savings)    apply('savings', d.savings);
+    if (d.family)     apply('family', d.family);
+    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
+  }
+};
+// ===== 共有データハブ ここまで =====
+
+
+// ===== スコア表示ユーティリティ =====
+function renderUnifiedScore(containerId, totalScore, breakdownItems) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const stars = '★'.repeat(totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1) +
+                '☆'.repeat(totalScore>=90?0:totalScore>=75?1:totalScore>=60?2:totalScore>=45?3:4);
+  const rankMap = {90:{l:'Sランク：最優秀',c:'s'},75:{l:'Aランク：優秀',c:'a'},60:{l:'Bランク：標準',c:'b'},0:{l:'Cランク：要改善',c:'c'}};
+  let rk = rankMap[0];
+  for (const threshold of [90,75,60,0]) { if (totalScore >= threshold) { rk = rankMap[threshold]; break; } }
+  const gc = s => s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b';
+  const breakdownHtml = breakdownItems.map(it =>
+    `<div class="score-breakdown-item">
+      <div class="score-breakdown-label">${it.icon} ${it.label}</div>
+      <div class="score-breakdown-val" style="color:${gc(it.score)}">${it.score}</div>
+      <div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:${it.score}%;background:${gc(it.score)}"></div></div>
+    </div>`
+  ).join('');
+  container.innerHTML = `
+    <div class="unified-score-header">
+      <div class="unified-score-main">
+        <div class="score-label">${container.dataset.label || 'スコア'}</div>
+        <div><span class="score-num">${totalScore}</span><span class="score-unit">点</span></div>
+        <div class="score-stars">${stars}</div>
+        <div class="score-rank ${rk.c}">${rk.l}</div>
+      </div>
+      <div class="score-breakdown-grid">${breakdownHtml}</div>
+    </div>`;
+}
+// ===== スコア表示ユーティリティ ここまで =====
+
+// PDF出力前にヘッダー・フッターを更新
+function updatePDFMeta() {
+  const name = document.getElementById('clientName')?.value || '';
+  const date = document.getElementById('clientDate')?.value || '';
+  const office = document.getElementById('fpOfficeName')?.value || '';
+  const fp = document.getElementById('fpFPName')?.value || '';
+  const contact = document.getElementById('fpContact')?.value || '';
+  const today = new Date().toLocaleDateString('ja-JP');
+  const cn = document.getElementById('pdf-client-name');
+  const cd = document.getElementById('pdf-client-date');
+  const pd = document.getElementById('pdf-today');
+  const pf = document.getElementById('pdf-fp-info');
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  if (pd) pd.textContent = today;
+  if (pf) {
+    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
+    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
+  }
+}
+
+// exportPDF関数を上書きして品質向上版に
+function exportPDF() {
+  updatePDFMeta();
+  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
+  const toolName = document.title.replace('｜FPナビ', '');
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: name + '_' + toolName + '_FPナビ.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+  showToast('📄 PDF生成中...');
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  } else {
+    window.print();
+  }
+}
+
+
+// ===== FPナビ共通機能 =====
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(el => {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+function toggleAIEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+function updateCTA() {
+  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  const box    = document.getElementById('cta-box');
+  const textEl = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    const lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else { box.style.display = 'none'; }
+}
+function getAITonePrefix() {
+  const el = document.getElementById('aiTone');
+  const tone = el ? el.value : 'normal';
+  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
+}
+['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateCTA);
+});
+// ===== ここまで共通機能 =====
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--yellow:#f39c12;--yellow-light:#fef9e7;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand{display:flex;flex-direction:column}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px;letter-spacing:.04em}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.header-btns{display:flex;gap:8px;align-items:center}
+.btn-save{background:rgba(200,169,110,.15);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-pdf{background:var(--gold);border:none;color:var(--navy);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-print{background:var(--white);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#243460 100%);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px}
+.client-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:28px;display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+.client-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+.client-box input[type=text]{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:160px}
+.client-box select{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif}
+.btn-load{background:var(--navy);color:var(--white);border:none;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--muted);width:200px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--navy)}
+.row .num{font-size:13px;font-weight:700;color:var(--navy);width:100px;text-align:right;flex-shrink:0}
+.row select{font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:4px;background:var(--white);color:var(--navy)}
+.score-section{background:var(--navy);border-radius:14px;padding:24px 28px;margin:24px 0;color:var(--white)}
+.score-label-sm{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.15em;margin-bottom:4px}
+.score-big{font-family:"Noto Serif JP",serif;font-size:64px;font-weight:700;color:var(--gold);line-height:1}
+.score-unit{font-size:14px;color:rgba(255,255,255,.5)}
+.score-stars{font-size:20px;color:var(--gold);margin-top:4px}
+.score-rank{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
+.rank-s{background:rgba(200,169,110,.25);color:var(--gold)}
+.rank-a{background:rgba(42,122,79,.25);color:#5ec48a}
+.rank-b{background:rgba(243,156,18,.2);color:#f39c12}
+.rank-c{background:rgba(192,57,43,.2);color:#e74c3c}
+.ai-comment{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:20px 0;position:relative}
+.ai-icon{position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.1em}
+.ai-text{font-size:14px;color:var(--navy);line-height:1.9;font-weight:500;margin-top:8px}
+.ai-hl{color:var(--green);font-weight:700}
+.ai-warn{color:var(--red);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px}
+.card-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.card-val{font-size:20px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.card-unit{font-size:11px;color:var(--muted)}
+.card.accent{border-color:var(--navy)}
+.card.good{border-color:var(--green)}.card.good .card-val{color:var(--green)}
+.card.bad{border-color:var(--red)}.card.bad .card-val{color:var(--red)}
+.chart-wrap{position:relative;width:100%;height:260px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;margin:16px 0}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.compare-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px}
+.compare-card.featured{border-color:var(--navy);border-width:2px}
+.compare-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.compare-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
+.compare-label{color:var(--muted)}.compare-val{color:var(--navy);font-weight:700}
+.diff-box{background:var(--green-light);color:var(--green);font-size:13px;font-weight:700;padding:10px 16px;border-radius:6px;margin:14px 0}
+.advice-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+.advice-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.advice-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.advice-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.advice-text{font-size:13px;color:var(--muted);line-height:1.7}
+.advice-text strong{color:var(--navy)}
+.fp-note{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.fp-note label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.fp-note textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:70px}
+.tip-box{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:8px}
+.tip-box strong{color:var(--text)}
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+.badge-ok{display:inline-block;background:var(--green-light);color:var(--green);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.badge-ng{display:inline-block;background:var(--red-light);color:var(--red);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.badge-warn{display:inline-block;background:var(--yellow-light);color:var(--yellow);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.compare-highlight{background:var(--green-light);border:1px solid var(--green);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--green);font-weight:700}
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;background:var(--white);border-radius:8px;overflow:hidden}
+table.data-table th{text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--cream)}
+table.data-table td{padding:10px 14px;color:var(--text);border-bottom:1px solid var(--border)}
+table.data-table tr:last-child td{border-bottom:none;font-weight:700;background:var(--cream)}
+
+.fp-settings{background:linear-gradient(135deg,#f8f5ef,#fff);border:2px solid var(--gold);border-radius:12px;padding:20px 24px;margin-bottom:24px}
+.fp-settings-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.fp-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fp-field{display:flex;flex-direction:column;gap:4px}
+.fp-field label{font-size:11px;color:var(--muted);font-weight:500}
+.fp-field input,.fp-field select{border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:100%}
+.mode-switch{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.mode-btn{flex:1;padding:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;font-family:"Noto Sans JP",sans-serif;color:var(--muted);transition:all .2s}
+.mode-btn.active{background:var(--navy);color:var(--white)}
+.ai-edit-btn{font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;float:right}
+.ai-edit-btn:hover{border-color:var(--navy);color:var(--navy)}
+.ai-editor{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px;margin-top:8px;display:none}
+.cta-box{background:var(--navy);border-radius:10px;padding:18px 22px;margin-top:20px;color:var(--white)}
+.cta-box-title{font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px}
+.cta-box-text{font-size:14px;font-weight:500;line-height:1.8}
+.scenario-box{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:18px 22px;margin:16px 0}
+.scenario-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scenario-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.scenario-card-title{font-size:11px;color:var(--muted);margin-bottom:6px}
+.scenario-card-val{font-size:18px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.scenario-card-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.closing-box{background:linear-gradient(135deg,#e8f5ee,#f0f9f4);border:1px solid var(--green);border-radius:10px;padding:18px 22px;margin-top:16px}
+.closing-title{font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px}
+.closing-item{font-size:13px;color:var(--text);line-height:1.8;margin-bottom:6px;padding-left:16px;position:relative}
+.closing-item::before{content:"→";position:absolute;left:0;color:var(--green)}
+
+
+.shared-banner{background:linear-gradient(135deg,#e8f5ee,#f0f9f4);border:1px solid var(--green);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text);display:none;line-height:1.8}
+
+
+.unified-score{background:var(--navy);border-radius:14px;padding:24px 28px;margin:24px 0;color:var(--white)}
+.unified-score-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.unified-score-main .score-label{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.15em;margin-bottom:4px}
+.unified-score-main .score-num{font-family:"Noto Serif JP",serif;font-size:64px;font-weight:700;color:var(--gold);line-height:1}
+.unified-score-main .score-unit{font-size:14px;color:rgba(255,255,255,.5)}
+.unified-score-main .score-stars{font-size:20px;color:var(--gold);margin-top:4px}
+.score-rank{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
+.score-rank.s{background:rgba(200,169,110,.25);color:var(--gold)}
+.score-rank.a{background:rgba(42,122,79,.25);color:#5ec48a}
+.score-rank.b{background:rgba(243,156,18,.2);color:#f39c12}
+.score-rank.c{background:rgba(192,57,43,.2);color:#e74c3c}
+.score-breakdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;flex:1}
+.score-breakdown-item{background:rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;text-align:center}
+.score-breakdown-label{font-size:10px;color:rgba(255,255,255,.6);margin-bottom:4px}
+.score-breakdown-val{font-size:18px;font-weight:700;font-family:"Noto Serif JP",serif}
+.score-breakdown-bar{height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:4px;overflow:hidden}
+.score-breakdown-bar-fill{height:100%;border-radius:2px}
+
+
+/* ===== PDF/印刷最適化 ===== */
+@media print {
+  header, .header-btns, .client-box, .fp-settings,
+  .mode-switch, footer, .toast, .shared-banner,
+  .closing-box, .ai-edit-btn, .ai-editor,
+  .btn-save, .btn-print, .btn-pdf { display: none !important; }
+  body { background: #fff !important; font-size: 12px; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .score-section, .unified-score { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .chart-wrap, .charts-row, .chart-box { break-inside: avoid; }
+  .cards { grid-template-columns: repeat(4, 1fr) !important; }
+  .fp-note textarea { display: none !important; }
+  .cta-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* PDF用ヘッダー */
+  .pdf-header { display: flex !important; }
+  .pdf-footer { display: block !important; }
+}
+.pdf-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 2px solid var(--navy);
+  margin-bottom: 20px;
+}
+.pdf-header-brand { font-family: "Noto Serif JP", serif; font-size: 18px; color: var(--navy); }
+.pdf-header-brand span { font-size: 11px; color: var(--muted); font-family: "Noto Sans JP", sans-serif; display: block; }
+.pdf-header-client { text-align: right; font-size: 12px; color: var(--text); }
+.pdf-header-client strong { font-size: 16px; color: var(--navy); display: block; }
+.pdf-footer {
+  display: none;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+}
+/* ===== PDF/印刷最適化 ここまで ===== */
+
+
+/* ===== マネタイズ導線 ===== */
+.next-action-box{background:linear-gradient(135deg,#1a2744,#243460);border-radius:14px;padding:24px 28px;margin:20px 0;color:var(--white)}
+.next-action-title{font-size:11px;color:var(--gold);letter-spacing:.15em;margin-bottom:14px}
+.next-action-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.next-action-item{background:rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;cursor:pointer;transition:background .2s}
+.next-action-item:hover{background:rgba(200,169,110,.2)}
+.next-action-item-icon{font-size:20px;margin-bottom:6px}
+.next-action-item-title{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px}
+.next-action-item-desc{font-size:11px;color:rgba(255,255,255,.6);line-height:1.6}
+.next-action-item-badge{display:inline-block;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:6px}
+/* ===== マネタイズ導線 ここまで ===== */
+
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media print{header,.header-btns,.client-box,footer,.toast{display:none!important}body{background:#fff}.main{padding:0}.score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE / 住宅ローン比較診断</div></div>
+  <div class="header-btns">
+    <button class="btn-save" onclick="saveData()">保存</button>
+    <button class="btn-print" onclick="window.print()">印刷</button>
+    <button class="btn-pdf" onclick="doPDF()">PDF出力</button>
+  </div>
+</header>
+<div class="hero">
+  <div class="hero-badge">MORTGAGE SIMULATOR</div>
+  <h1>住宅ローンを<em>徹底比較</em>する</h1>
+  <p class="hero-sub">変動 vs 固定をAIがスコアリング・PDF出力対応</p>
+</div>
+<div class="main" id="report-area">
+
+  <div class="mode-switch">
+    <button class="mode-btn active" onclick="setMode('simple',this)">⚡ 簡易3分モード</button>
+    <button class="mode-btn" onclick="setMode('detail',this)">🔍 詳細30分モード</button>
+  </div>
+
+  <div class="fp-settings">
+    <div class="fp-settings-title">⚙️ FP事務所情報（PDFに自動反映されます）</div>
+    <div class="fp-settings-grid">
+      <div class="fp-field"><label>事務所名・屋号</label><input type="text" id="fpOfficeName" placeholder="例：ひかりFP相談室"></div>
+      <div class="fp-field"><label>担当FP名</label><input type="text" id="fpFPName" placeholder="例：阪本 光 FP"></div>
+      <div class="fp-field"><label>連絡先</label><input type="text" id="fpContact" placeholder="例：06-XXXX-XXXX"></div>
+      <div class="fp-field"><label>次回面談への誘導文</label><input type="text" id="fpCTA" placeholder="例：最適なローン選びを一緒に考えます"></div>
+      <div class="fp-field" style="grid-column:1/-1">
+        <label>AIコメントのトーン</label>
+        <select id="aiTone" onchange="calc()" style="padding:7px 10px">
+          <option value="normal">標準（バランス重視）</option>
+          <option value="mild">マイルド（寄り添う表現）</option>
+          <option value="push">背中を押す（やや厳しめ）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+<div class="client-box">
+  <div><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+  <div><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年6月28日"></div>
+  <div><label>保存データ</label><select id="savedList" onchange="loadSelected()"><option value="">-- 保存済みを選択 --</option></select><button class="btn-load" onclick="deleteSelected()">削除</button></div>
+</div>
+
+<div class="score-section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div><div class="score-label-sm">診断スコア</div><div><span class="score-big" id="total-score">0</span><span class="score-unit">点</span></div><div class="score-stars" id="score-stars">☆☆☆☆☆</div><div class="score-rank" id="score-rank">診断中</div></div>
+    <div id="score-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;flex:1;max-width:520px"></div>
+  </div>
+</div><div class="ai-comment"><div class="ai-icon">FPナビ AI診断</div><div class="ai-text" id="ai-text" style="margin-top:12px">分析中...</div></div>
+<div class="section-title">基本条件を入力</div>
+<div class="row"><label>借入額</label><input type="range" min="500" max="8000" step="100" value="3000" id="amount" oninput="calc()"><span class="num" id="amount-out">3,000万円</span></div>
+<div class="row"><label>返済期間</label><input type="range" min="10" max="35" step="1" value="35" id="years" oninput="calc()"><span class="num" id="years-out">35年</span></div>
+<div class="row"><label>年収（手取り）</label><input type="range" min="200" max="1200" step="10" value="400" id="income" oninput="calc()"><span class="num" id="income-out">400万円</span></div>
+<div class="row"><label>金利（変動型）</label><input type="range" min="0.1" max="3" step="0.05" value="0.5" id="rate1" oninput="calc()"><span class="num" id="rate1-out">0.50%</span></div>
+<div class="row"><label>金利（固定型）</label><input type="range" min="0.5" max="4" step="0.05" value="1.8" id="rate2" oninput="calc()"><span class="num" id="rate2-out">1.80%</span></div>
+<div class="section-title">繰り上げ返済</div>
+<div class="row"><label>毎年の繰り上げ返済額</label><input type="range" min="0" max="200" step="10" value="0" id="prepay" oninput="calc()"><span class="num" id="prepay-out">0万円</span></div>
+<div class="section-title">変動 vs 固定 比較</div>
+<div class="compare-grid">
+  <div class="compare-card"><div class="compare-title">変動金利型</div>
+    <div class="compare-row"><span class="compare-label">月々返済額</span><span class="compare-val" id="m1"></span></div>
+    <div class="compare-row"><span class="compare-label">総返済額</span><span class="compare-val" id="t1"></span></div>
+    <div class="compare-row"><span class="compare-label">うち利息</span><span class="compare-val" id="i1"></span></div>
+  </div>
+  <div class="compare-card featured"><div class="compare-title">固定金利型</div>
+    <div class="compare-row"><span class="compare-label">月々返済額</span><span class="compare-val" id="m2"></span></div>
+    <div class="compare-row"><span class="compare-label">総返済額</span><span class="compare-val" id="t2"></span></div>
+    <div class="compare-row"><span class="compare-label">うち利息</span><span class="compare-val" id="i2"></span></div>
+  </div>
+</div>
+<div class="diff-box" id="diff-box"></div>
+<div class="section-title">繰り上げ返済効果</div>
+<div class="cards">
+  <div class="card"><div class="card-label">繰り上げなし総返済</div><div class="card-val" id="p-base"></div><div class="card-unit">万円</div></div>
+  <div class="card"><div class="card-label">繰り上げあり総返済</div><div class="card-val" id="p-pre"></div><div class="card-unit">万円</div></div>
+  <div class="card good"><div class="card-label">利息の節約額</div><div class="card-val" id="p-save"></div><div class="card-unit">万円</div></div>
+  <div class="card"><div class="card-label">返済期間の短縮</div><div class="card-val" id="p-short"></div><div class="card-unit">年</div></div>
+</div>
+<div class="chart-wrap"><canvas id="mlChart"></canvas></div>
+
+<div class="advice-box">
+  <div class="advice-title">改善アクションプラン</div>
+  <div id="action-items"></div>
+  <div class="fp-note"><label>担当FPメモ（PDF印刷に反映）</label><textarea id="fpMemo" placeholder="顧客へのアドバイスや次回確認事項..."></textarea></div>
+</div>
+<div class="disclaimer">本シミュレーターは元利均等返済方式による概算です。実際の返済額は金融機関の条件等により異なります。投資助言ではありません。</div>
+</div>
+<footer>FPナビ Life Planning Suite / 住宅ローン比較診断 - 投資助言ではありません 2026</footer>
+<div class="toast" id="toast"></div>
+<script>
+
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+function getSaves(key){try{return JSON.parse(localStorage.getItem(key)||"{}");}catch{return{}}}
+function refreshList(key){const saves=getSaves(key),sel=document.getElementById("savedList");sel.innerHTML='<option value="">-- 保存済みを選択 --</option>';Object.keys(saves).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)})}
+function getScoreColor(s){return s>=80?"#2a7a4f":s>=60?"#f39c12":"#c0392b"}
+function getRankInfo(s){if(s>=90)return{label:"Sランク：最優秀",cls:"rank-s"};if(s>=75)return{label:"Aランク：優秀",cls:"rank-a"};if(s>=60)return{label:"Bランク：標準",cls:"rank-b"};return{label:"Cランク：要改善",cls:"rank-c"}}
+function setScore(elId,starsId,rankId,sc){document.getElementById(elId).textContent=sc;const st="★".repeat(sc>=90?5:sc>=75?4:sc>=60?3:sc>=45?2:1)+"☆".repeat(5-(sc>=90?5:sc>=75?4:sc>=60?3:sc>=45?2:1));document.getElementById(starsId).textContent=st;const ri=getRankInfo(sc);const re=document.getElementById(rankId);re.textContent=ri.label;re.className="score-rank "+ri.cls}
+function setBreakdown(elId,items){document.getElementById(elId).innerHTML=items.map(it=>'<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;text-align:center"><div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px">'+it.label+'</div><div style="font-size:20px;font-weight:700;font-family:\'Noto Serif JP\',serif;color:'+getScoreColor(it.score)+'">'+it.score+'</div><div style="height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;border-radius:2px;background:'+getScoreColor(it.score)+';width:'+it.score+'%"></div></div></div>').join("")}
+function exportPDF(name,suffix){const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_"+suffix+"_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("PDF出力完了"))}
+function commonSave(SK,fields){const name=document.getElementById("clientName").value.trim()||"未入力";const key=name+"_"+new Date().toLocaleDateString("ja-JP");const saves=getSaves(SK);const data={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value};fields.forEach(id=>data[id]=document.getElementById(id).value);saves[key]=data;localStorage.setItem(SK,JSON.stringify(saves));refreshList(SK);showToast("保存しました："+key)}
+function commonLoad(SK,fields){const key=document.getElementById("savedList").value;if(!key)return;const d=getSaves(SK)[key];if(!d)return;["clientName","clientDate","fpMemo"].forEach(id=>{if(d[id]!==undefined)document.getElementById(id).value=d[id]});fields.forEach(id=>{if(d[id]!==undefined)document.getElementById(id).value=d[id]});calc();showToast("読み込みました："+key)}
+function commonDelete(SK){const key=document.getElementById("savedList").value;if(!key)return;if(!confirm(key+" を削除しますか？"))return;const saves=getSaves(SK);delete saves[key];localStorage.setItem(SK,JSON.stringify(saves));refreshList(SK);showToast("削除しました")}
+
+
+const SK03="fpnavi_mortgage";
+let chart03;
+function saveData(){commonSave(SK03,["amount","years","income","rate1","rate2","prepay"])}
+function loadSelected(){commonLoad(SK03,["amount","years","income","rate1","rate2","prepay"])}
+function deleteSelected(){commonDelete(SK03)}
+function doPDF(){exportPDF(document.getElementById("clientName").value||"住宅ローン","住宅ローン比較診断")}
+function mp(p,r,n){if(r===0)return p*10000/n;const m=r/12/100;return p*10000*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1)}
+function bals(p,r,n,prep){const m=r/12/100,monthly=mp(p,r,n);let bal=p*10000,total=0,yrs=n/12;const b=[Math.round(bal/10000)];for(let i=1;i<=n;i++){const int=bal*m,pay=Math.min(monthly,bal+int);bal=bal+int-pay;total+=pay;if(prep>0&&i%12===0&&bal>0){const pre=Math.min(prep*10000,bal);bal-=pre;total+=pre}if(i%12===0||bal<=0){b.push(Math.max(0,Math.round(bal/10000)));if(bal<=0){yrs=i/12;break}}}return{b,total:Math.round(total/10000),years:yrs}}
+function calc(){
+  const amount=parseInt(document.getElementById("amount").value);
+  const years=parseInt(document.getElementById("years").value);
+  const income=parseInt(document.getElementById("income").value);
+  const r1=parseFloat(document.getElementById("rate1").value);
+  const r2=parseFloat(document.getElementById("rate2").value);
+  const prep=parseInt(document.getElementById("prepay").value);
+  const n=years*12;
+  document.getElementById("amount-out").textContent=amount.toLocaleString()+"万円";
+  document.getElementById("years-out").textContent=years+"年";
+  document.getElementById("income-out").textContent=income.toLocaleString()+"万円";
+  document.getElementById("rate1-out").textContent=r1.toFixed(2)+"%";
+  document.getElementById("rate2-out").textContent=r2.toFixed(2)+"%";
+  document.getElementById("prepay-out").textContent=prep.toLocaleString()+"万円";
+  const m1v=mp(amount,r1,n),m2v=mp(amount,r2,n);
+  const t1=Math.round(m1v*n/10000),t2=Math.round(m2v*n/10000);
+  document.getElementById("m1").textContent=Math.round(m1v).toLocaleString()+"円";
+  document.getElementById("t1").textContent=t1.toLocaleString()+"万円";
+  document.getElementById("i1").textContent=(t1-amount).toLocaleString()+"万円";
+  document.getElementById("m2").textContent=Math.round(m2v).toLocaleString()+"円";
+  document.getElementById("t2").textContent=t2.toLocaleString()+"万円";
+  document.getElementById("i2").textContent=(t2-amount).toLocaleString()+"万円";
+  const diff=t2-t1;
+  document.getElementById("diff-box").textContent=diff>0?"変動型は固定型より総返済額が約"+diff.toLocaleString()+"万円 少ない試算（金利が変動しない場合）":"固定型は変動型より総返済額が約"+Math.abs(diff).toLocaleString()+"万円 少ない試算";
+  const base=bals(amount,r1,n,0),pre=bals(amount,r1,n,prep);
+  document.getElementById("p-base").textContent=base.total.toLocaleString();
+  document.getElementById("p-pre").textContent=pre.total.toLocaleString();
+  const saving=Math.max(0,base.total-pre.total);
+  document.getElementById("p-save").textContent=saving.toLocaleString();
+  document.getElementById("p-short").textContent=Math.max(0,Math.round((years-pre.years)*10)/10).toFixed(1);
+  const monthlyRatio=Math.round(m1v)/10000/(income/12)*100;
+  let sc=0;
+  if(monthlyRatio<=20)sc+=40;else if(monthlyRatio<=25)sc+=30;else if(monthlyRatio<=30)sc+=18;else sc+=5;
+  if(r1<=0.5)sc+=20;else if(r1<=1)sc+=15;else sc+=8;
+  if(prep>=50)sc+=25;else if(prep>=20)sc+=18;else if(prep>=10)sc+=10;else sc+=5;
+  if(years<=25)sc+=15;else if(years<=30)sc+=10;else sc+=5;
+  sc=Math.min(100,Math.round(sc));
+  setScore("total-score","score-stars","score-rank",sc);
+  setBreakdown("score-breakdown",[{label:"返済比率",score:Math.min(100,Math.round(monthlyRatio<=20?90:monthlyRatio<=25?75:monthlyRatio<=30?55:30))},{label:"金利水準",score:Math.min(100,Math.round(r1<=0.5?90:r1<=1?75:r1<=2?55:30))},{label:"繰上効果",score:Math.min(100,prep>=50?90:prep>=20?70:prep>=10?50:20)},{label:"返済期間",score:Math.min(100,years<=20?95:years<=25?80:years<=30?65:45)}]);
+  const cn=document.getElementById("clientName").value?document.getElementById("clientName").value+"の":"";
+  let ai=cn+"住宅ローンの月々返済額は<strong>"+Math.round(m1v).toLocaleString()+"円（変動）</strong>です。";
+  ai+="年収に対する返済比率は約<strong>"+monthlyRatio.toFixed(1)+"%</strong>";
+  if(monthlyRatio<=20)ai+="（適正水準）。";else if(monthlyRatio<=25)ai+="（やや高め）。";else ai+="（高負担です）。";
+  if(saving>0)ai+="繰り上げ返済"+prep.toLocaleString()+"万円/年で利息を約<strong>"+saving.toLocaleString()+"万円節約</strong>できます。";
+  document.getElementById("ai-text").innerHTML=ai;
+  const actions=[];
+  if(monthlyRatio>25)actions.push({icon:"警告",text:"<strong>返済比率の改善</strong>：月収に対する返済比率"+monthlyRatio.toFixed(1)+"%は高めです。借入額の見直しをご検討ください。"});
+  if(prep===0)actions.push({icon:"矢印",text:"<strong>繰り上げ返済の活用</strong>：余裕資金を繰り上げ返済に充てることで、利息負担を大幅に削減できます。"});
+  actions.push({icon:"書類",text:"<strong>住宅ローン控除の活用</strong>：住宅ローン控除（最大13年間）の活用により、実質的な負担を軽減できます。"});
+  document.getElementById("action-items").innerHTML=actions.map(a=>'<div class="advice-item"><div class="advice-icon">'+a.icon+'</div><div class="advice-text">'+a.text+'</div></div>').join("");
+  const labels=Array.from({length:years+1},(_,i)=>i+"年");
+  const b1=base.b.slice(),b2=bals(amount,r2,n,0).b.slice();
+  while(b1.length<labels.length)b1.push(0);while(b2.length<labels.length)b2.push(0);
+  const ctx=document.getElementById("mlChart").getContext("2d");
+  if(chart03)chart03.destroy();
+  chart03=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"変動金利",data:b1,borderColor:"#1a2744",backgroundColor:"rgba(26,39,68,.06)",borderWidth:2,pointRadius:0,fill:true,tension:.2},{label:"固定金利",data:b2,borderColor:"#c8a96e",backgroundColor:"rgba(200,169,110,.06)",borderWidth:2,pointRadius:0,fill:true,tension:.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+": "+ctx.parsed.y.toLocaleString()+"万円"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#6b7a99",font:{size:11}},grid:{color:"#e2ddd5"}},y:{ticks:{color:"#6b7a99",font:{size:11},callback:v=>v.toLocaleString()+"万"},grid:{color:"#e2ddd5"}}}}});
+}
+refreshList(SK03);
+const sh03=JSON.parse(localStorage.getItem("fp_shared")||"{}");
+if(sh03.income)document.getElementById("income").value=Math.min(sh03.income,1200);
+calc();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家計診断｜FPナビ Life Planning Suite</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+// ===== FPナビ 共有データハブ =====
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const FPShared = {
+  // データ保存
+  save: function(data) {
+    const existing = FPShared.load();
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  },
+  // データ読込
+  load: function() {
+    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
+    catch(e) { return {}; }
+  },
+  // 共有バナー表示
+  showBanner: function(fields) {
+    const d = FPShared.load();
+    const matched = fields.filter(f => d[f]);
+    if (matched.length === 0) return;
+    const labels = {
+      clientName:'顧客名', age:'年齢', income:'年収',
+      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
+      children:'子ども人数', monthlyIncome:'月収入'
+    };
+    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
+    const banner = document.getElementById('shared-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
+        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
+        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
+    }
+  },
+  // フォームに値を適用（各ツールで上書き）
+  applyAll: function() {
+    const d = FPShared.load();
+    const apply = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== '') {
+        el.value = val;
+        // change/inputイベントを発火
+        el.dispatchEvent(new Event('input'));
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+    // 共通フィールド
+    if (d.clientName) apply('clientName', d.clientName);
+    if (d.age)        apply('age', d.age);
+    if (d.income)     apply('income', d.income);
+    if (d.expense)    apply('expense', d.expense);
+    if (d.savings)    apply('savings', d.savings);
+    if (d.family)     apply('family', d.family);
+    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
+  }
+};
+// ===== 共有データハブ ここまで =====
+
+
+// PDF出力前にヘッダー・フッターを更新
+function updatePDFMeta() {
+  const name = document.getElementById('clientName')?.value || '';
+  const date = document.getElementById('clientDate')?.value || '';
+  const office = document.getElementById('fpOfficeName')?.value || '';
+  const fp = document.getElementById('fpFPName')?.value || '';
+  const contact = document.getElementById('fpContact')?.value || '';
+  const today = new Date().toLocaleDateString('ja-JP');
+  const cn = document.getElementById('pdf-client-name');
+  const cd = document.getElementById('pdf-client-date');
+  const pd = document.getElementById('pdf-today');
+  const pf = document.getElementById('pdf-fp-info');
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  if (pd) pd.textContent = today;
+  if (pf) {
+    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
+    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
+  }
+}
+
+// exportPDF関数を上書きして品質向上版に
+function exportPDF() {
+  updatePDFMeta();
+  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
+  const toolName = document.title.replace('｜FPナビ', '');
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: name + '_' + toolName + '_FPナビ.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+  showToast('📄 PDF生成中...');
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  } else {
+    window.print();
+  }
+}
+
+// ===== FPナビ共通機能 =====
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(el => {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+function toggleAIEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+function updateCTA() {
+  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  const box    = document.getElementById('cta-box');
+  const textEl = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    const lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else { box.style.display = 'none'; }
+}
+function getAITonePrefix() {
+  const el = document.getElementById('aiTone');
+  const tone = el ? el.value : 'normal';
+  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
+}
+['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateCTA);
+});
+// ===== ここまで共通機能 =====
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--yellow:#f39c12;--yellow-light:#fef9e7;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+
+/* HEADER */
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand{display:flex;flex-direction:column}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px;letter-spacing:.04em}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.header-btns{display:flex;gap:8px;align-items:center}
+.btn-save{background:rgba(200,169,110,.15);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-pdf{background:var(--gold);border:none;color:var(--navy);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-print{background:var(--white);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#243460 100%);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+
+/* MAIN */
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px}
+
+/* CLIENT BOX */
+.client-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:28px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.client-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+.client-box input[type=text]{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:160px}
+.client-box select{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif}
+.btn-load{background:var(--navy);color:var(--white);border:none;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+
+/* SECTION */
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px;text-transform:uppercase}
+
+/* SLIDERS */
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--muted);width:185px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--navy)}
+.row .num{font-size:13px;font-weight:700;color:var(--navy);width:90px;text-align:right;flex-shrink:0}
+
+/* ===== SCORE SECTION ===== */
+.score-section{background:var(--navy);border-radius:14px;padding:28px 32px;margin:28px 0;color:var(--white)}
+.score-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.score-main{}
+.score-label{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.15em;margin-bottom:6px}
+.score-num{font-family:"Noto Serif JP",serif;font-size:72px;font-weight:700;color:var(--gold);line-height:1}
+.score-unit{font-size:16px;color:rgba(255,255,255,.5)}
+.score-stars{font-size:22px;color:var(--gold);margin-top:6px}
+.score-rank{display:inline-block;font-size:13px;font-weight:700;padding:4px 14px;border-radius:20px;margin-top:8px}
+.score-rank.s{background:rgba(200,169,110,.25);color:var(--gold)}
+.score-rank.a{background:rgba(42,122,79,.25);color:#5ec48a}
+.score-rank.b{background:rgba(243,156,18,.2);color:#f39c12}
+.score-rank.c{background:rgba(192,57,43,.2);color:#e74c3c}
+.score-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;flex:1}
+.score-item{background:rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;text-align:center}
+.score-item-label{font-size:11px;color:rgba(255,255,255,.6);margin-bottom:6px}
+.score-item-val{font-size:20px;font-weight:700;font-family:"Noto Serif JP",serif}
+.score-item-bar{height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:6px;overflow:hidden}
+.score-item-bar-fill{height:100%;border-radius:2px;background:var(--gold)}
+
+/* AI COMMENT */
+.ai-comment{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:20px 0;position:relative}
+.ai-icon{position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.1em}
+.ai-name{font-size:11px;color:var(--muted);margin-bottom:8px;margin-top:4px}
+.ai-text{font-size:14px;color:var(--navy);line-height:1.9;font-weight:500}
+.ai-highlight{color:var(--green);font-weight:700}
+.ai-warn{color:var(--red);font-weight:700}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.chart-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px}
+.chart-box-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.chart-wrap-sq{position:relative;width:100%;height:220px}
+.chart-wrap-full{position:relative;width:100%;height:240px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;margin:16px 0}
+
+/* ITEMS TABLE */
+.items-table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;background:var(--white);border-radius:10px;overflow:hidden}
+.items-table th{text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--cream)}
+.items-table td{padding:10px 14px;color:var(--text);border-bottom:1px solid var(--border)}
+.items-table tr:last-child td{border-bottom:none}
+.items-table .score-cell{font-weight:700;font-family:"Noto Serif JP",serif}
+.score-good{color:var(--green)}
+.score-mid{color:var(--yellow)}
+.score-bad{color:var(--red)}
+.mini-bar{height:6px;background:var(--cream);border-radius:3px;overflow:hidden;width:80px}
+.mini-bar-fill{height:100%;border-radius:3px}
+
+/* ADVICE */
+.advice-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+.advice-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.advice-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.advice-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.advice-text{font-size:13px;color:var(--muted);line-height:1.7}
+.advice-text strong{color:var(--navy)}
+.fp-note{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.fp-note label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.fp-note textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:70px}
+
+/* DISCLAIMER */
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+
+
+/* FP SETTINGS PANEL */
+.fp-settings{background:linear-gradient(135deg,#f8f5ef,#fff);border:2px solid var(--gold);border-radius:12px;padding:20px 24px;margin-bottom:24px}
+.fp-settings-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.fp-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fp-field{display:flex;flex-direction:column;gap:4px}
+.fp-field label{font-size:11px;color:var(--muted);font-weight:500}
+.fp-field input,.fp-field textarea,.fp-field select{border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:100%}
+.fp-field textarea{resize:vertical;min-height:48px}
+.mode-switch{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.mode-btn{flex:1;padding:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;font-family:"Noto Sans JP",sans-serif;color:var(--muted);transition:all .2s}
+.mode-btn.active{background:var(--navy);color:var(--white)}
+.ai-edit-btn{font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;float:right;margin-top:-2px}
+.ai-edit-btn:hover{border-color:var(--navy);color:var(--navy)}
+.ai-editor{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px;margin-top:8px;display:none}
+.tone-select{font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--white);font-family:"Noto Sans JP",sans-serif;margin-left:8px}
+.cta-box{background:var(--navy);border-radius:10px;padding:18px 22px;margin-top:20px;color:var(--white)}
+.cta-box-title{font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px}
+.cta-box-text{font-size:14px;font-weight:500;line-height:1.8}
+.simple-rows{display:none}
+.detail-rows{}
+
+
+.shared-banner{background:linear-gradient(135deg,#e8f5ee,#f0f9f4);border:1px solid var(--green);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text);display:none;line-height:1.8}
+
+
+/* ===== PDF/印刷最適化 ===== */
+@media print {
+  header, .header-btns, .client-box, .fp-settings,
+  .mode-switch, footer, .toast, .shared-banner,
+  .closing-box, .ai-edit-btn, .ai-editor,
+  .btn-save, .btn-print, .btn-pdf { display: none !important; }
+  body { background: #fff !important; font-size: 12px; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .score-section, .unified-score { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .chart-wrap, .charts-row, .chart-box { break-inside: avoid; }
+  .cards { grid-template-columns: repeat(4, 1fr) !important; }
+  .fp-note textarea { display: none !important; }
+  .cta-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* PDF用ヘッダー */
+  .pdf-header { display: flex !important; }
+  .pdf-footer { display: block !important; }
+}
+.pdf-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 2px solid var(--navy);
+  margin-bottom: 20px;
+}
+.pdf-header-brand { font-family: "Noto Serif JP", serif; font-size: 18px; color: var(--navy); }
+.pdf-header-brand span { font-size: 11px; color: var(--muted); font-family: "Noto Sans JP", sans-serif; display: block; }
+.pdf-header-client { text-align: right; font-size: 12px; color: var(--text); }
+.pdf-header-client strong { font-size: 16px; color: var(--navy); display: block; }
+.pdf-footer {
+  display: none;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+}
+/* ===== PDF/印刷最適化 ここまで ===== */
+
+
+/* ===== マネタイズ導線 ===== */
+.next-action-box{background:linear-gradient(135deg,#1a2744,#243460);border-radius:14px;padding:24px 28px;margin:20px 0;color:var(--white)}
+.next-action-title{font-size:11px;color:var(--gold);letter-spacing:.15em;margin-bottom:14px}
+.next-action-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.next-action-item{background:rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;cursor:pointer;transition:background .2s}
+.next-action-item:hover{background:rgba(200,169,110,.2)}
+.next-action-item-icon{font-size:20px;margin-bottom:6px}
+.next-action-item-title{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px}
+.next-action-item-desc{font-size:11px;color:rgba(255,255,255,.6);line-height:1.6}
+.next-action-item-badge{display:inline-block;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:6px}
+/* ===== マネタイズ導線 ここまで ===== */
+
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+
+@media print{
+  header,.header-btns,.client-box,footer,.toast{display:none!important}
+  body{background:#fff}.main{padding:0}
+  .score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .charts-row{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .charts-row{grid-template-columns:1fr}
+  .score-header{flex-direction:column}
+  .score-breakdown{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-name">FPナビ</div>
+    <div class="brand-sub">LIFE PLANNING SUITE ／ 家計診断</div>
+  </div>
+  <div class="header-btns">
+    <button class="btn-save" onclick="saveData()">💾 保存</button>
+    <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF出力</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">HOUSEHOLD DIAGNOSIS</div>
+  <h1>家計<em>健全度</em>診断</h1>
+  <p class="hero-sub">収入・支出を入力するだけで、AIが家計の健全度を100点満点でスコアリング</p>
+</div>
+
+<div class="main" id="report-area">
+
+  
+  <!-- MODE SWITCH -->
+  <div class="mode-switch">
+    <button class="mode-btn active" onclick="setMode('simple',this)">⚡ 簡易3分モード</button>
+    <button class="mode-btn" onclick="setMode('detail',this)">🔍 詳細30分モード</button>
+  </div>
+
+  <!-- FP SETTINGS -->
+  <div class="fp-settings">
+    <div class="fp-settings-title">⚙️ FP事務所情報（PDFに自動反映されます）</div>
+    <div class="fp-settings-grid">
+      <div class="fp-field"><label>事務所名・屋号</label><input type="text" id="fpOfficeName" placeholder="例：ひかりFP相談室"></div>
+      <div class="fp-field"><label>担当FP名</label><input type="text" id="fpFPName" placeholder="例：阪本 光 FP"></div>
+      <div class="fp-field"><label>連絡先（電話・メール）</label><input type="text" id="fpContact" placeholder="例：06-XXXX-XXXX / fp@example.com"></div>
+      <div class="fp-field"><label>次回面談への誘導文</label><input type="text" id="fpCTA" placeholder="例：詳しくは無料相談（60分）でご確認いただけます"></div>
+      <div class="fp-field" style="grid-column:1/-1"><label>AIコメントのトーン</label>
+        <select class="tone-select" id="aiTone" onchange="calc()" style="width:100%;padding:7px 10px">
+          <option value="normal">標準（バランス重視）</option>
+          <option value="mild">マイルド（寄り添う表現）</option>
+          <option value="push">背中を押す（やや厳しめ）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+<div class="client-box">
+    <div><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+    <div><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年6月28日"></div>
+    <div>
+      <label>保存データ</label>
+      <select id="savedList" onchange="loadSelected()"><option value="">-- 保存済みを選択 --</option></select>
+      <button class="btn-load" onclick="deleteSelected()">削除</button>
+    </div>
+  </div>
+
+  <div class="section-title">月収入</div>
+  <div class="row"><label>手取り収入（月）</label><input type="range" min="10" max="100" step="1" value="30" id="income" oninput="calc()"><span class="num" id="income-out">30万円</span></div>
+  <div class="row"><label>副収入・その他（月）</label><input type="range" min="0" max="30" step="1" value="0" id="sub" oninput="calc()"><span class="num" id="sub-out">0万円</span></div>
+
+  <div class="section-title">月支出</div>
+  <div class="row"><label>住居費（家賃・ローン）</label><input type="range" min="0" max="30" step="0.5" value="8" id="housing" oninput="calc()"><span class="num" id="housing-out">8.0万円</span></div>
+  <div class="row detail-rows"><label>食費</label><input type="range" min="0" max="15" step="0.5" value="5" id="food" oninput="calc()"><span class="num" id="food-out">5.0万円</span></div>
+  <div class="row detail-rows"><label>水道光熱費</label><input type="range" min="0" max="5" step="0.5" value="1.5" id="utility" oninput="calc()"><span class="num" id="utility-out">1.5万円</span></div>
+  <div class="row detail-rows"><label>通信費（スマホ等）</label><input type="range" min="0" max="5" step="0.5" value="1" id="comm" oninput="calc()"><span class="num" id="comm-out">1.0万円</span></div>
+  <div class="row detail-rows"><label>保険料</label><input type="range" min="0" max="10" step="0.5" value="2" id="ins" oninput="calc()"><span class="num" id="ins-out">2.0万円</span></div>
+  <div class="row detail-rows"><label>教育費</label><input type="range" min="0" max="15" step="0.5" value="0" id="edu" oninput="calc()"><span class="num" id="edu-out">0.0万円</span></div>
+  <div class="row detail-rows"><label>交際費・娯楽費</label><input type="range" min="0" max="10" step="0.5" value="2" id="ent" oninput="calc()"><span class="num" id="ent-out">2.0万円</span></div>
+  <div class="row detail-rows"><label>その他支出</label><input type="range" min="0" max="10" step="0.5" value="2" id="other" oninput="calc()"><span class="num" id="other-out">2.0万円</span></div>
+  <div class="row"><label>貯蓄・投資</label><input type="range" min="0" max="20" step="0.5" value="3" id="saving" oninput="calc()"><span class="num" id="saving-out">3.0万円</span></div>
+
+  <!-- SCORE -->
+  <div class="score-section" id="score-section">
+    <div class="score-header">
+      <div class="score-main">
+        <div class="score-label">家計健全度スコア</div>
+        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
+        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
+        <div class="score-rank" id="score-rank">診断中</div>
+      </div>
+      <div class="score-breakdown" id="score-breakdown"></div>
+    </div>
+  </div>
+
+  <!-- AI COMMENT -->
+  <div class="ai-comment" id="ai-comment">
+    <div class="ai-icon">🤖 FPナビ AI診断</div>
+    <div class="ai-name">家計アドバイザー</div>
+    <div class="ai-text" id="ai-text">入力データを分析中...</div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-box-title">📊 各項目スコア（レーダーチャート）</div>
+      <div class="chart-wrap-sq"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title">🥧 支出の内訳</div>
+      <div class="chart-wrap-sq"><canvas id="doughnutChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ITEMS TABLE -->
+  <div class="section-title">項目別スコア詳細</div>
+  <table class="items-table">
+    <thead><tr><th>項目</th><th>金額</th><th>収入比</th><th>理想比</th><th>スコア</th><th>評価</th></tr></thead>
+    <tbody id="items-tbody"></tbody>
+  </table>
+
+  <!-- ADVICE -->
+  <div class="advice-box">
+    <div class="advice-title">💡 改善アクションプラン</div>
+    <div id="action-items"></div>
+    <div class="fp-note">
+      <label>📝 担当FPメモ（PDF・印刷に反映されます）</label>
+      <textarea id="fpMemo" placeholder="顧客へのアドバイスや次回確認事項を入力..."></textarea>
+    </div>
+  </div>
+
+
+  <!-- CTA BOX for PDF -->
+  <div class="cta-box" id="cta-box" style="display:none">
+    <div class="cta-box-title">📞 次のステップ</div>
+    <div class="cta-box-text" id="cta-text">詳しくは担当FPにご相談ください。</div>
+  </div>
+
+  <!-- 次のアクション（マネタイズ導線） -->
+  <div class="next-action-box">
+    <div class="next-action-title">🔗 次のステップ ／ 関連診断ツール</div>
+    <div class="next-action-items">
+        <div class="next-action-item" onclick="window.location.href='fpnavi_01_lifeplan_v2.html'">
+          <div class="next-action-item-icon">📊</div>
+          <div class="next-action-item-title">ライフプランを作成</div>
+          <div class="next-action-item-desc">この家計状況でのライフプランを試算</div>
+          <div class="next-action-item-badge">ライフプラン診断へ</div>
+        </div>
+        <div class="next-action-item" onclick="window.location.href='fpnavi_08_nisa_v2.html'">
+          <div class="next-action-item-icon">📈</div>
+          <div class="next-action-item-title">貯蓄をNISAで運用</div>
+          <div class="next-action-item-desc">毎月の積立をNISAで効率よく増やす</div>
+          <div class="next-action-item-badge">NISA試算へ</div>
+        </div>
+        <div class="next-action-item" onclick="window.location.href='fpnavi_02_insurance_v2.html'">
+          <div class="next-action-item-icon">🛡️</div>
+          <div class="next-action-item-title">保険料を最適化</div>
+          <div class="next-action-item-desc">無駄な保険料を削減して貯蓄に回す</div>
+          <div class="next-action-item-badge">保険診断へ</div>
+        </div>
+    </div>
+  </div>
+  <div class="disclaimer">【重要】本診断は参考情報の提供を目的とした概算ツールです。FPナビは投資助言業の登録を受けたものではなく、個別の投資判断・保険契約の推奨を行うものではありません。詳細は担当FPにご相談ください。</div>
+</div>
+
+<footer>FPナビ Life Planning Suite ／ 家計診断 ― 投資助言ではありません © 2026</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+let radarChart, doughnutChart;
+const STORAGE_KEY = "fpnavi_household_saves";
+
+const ITEMS = [
+  { id:"housing", label:"住居費",   ideal:25, weight:20, icon:"🏠" },
+  { id:"food",    label:"食費",     ideal:15, weight:15, icon:"🍚" },
+  { id:"utility", label:"光熱費",   ideal:6,  weight:10, icon:"💡" },
+  { id:"comm",    label:"通信費",   ideal:4,  weight:10, icon:"📱" },
+  { id:"ins",     label:"保険料",   ideal:7,  weight:15, icon:"🛡️" },
+  { id:"saving",  label:"貯蓄・投資", ideal:20, weight:30, icon:"💰" },
+];
+
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+function getSaves(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");}catch{return{}}}
+function refreshList(){
+  const saves=getSaves(),sel=document.getElementById("savedList");
+  sel.innerHTML='<option value="">-- 保存済みを選択 --</option>';
+  Object.keys(saves).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)});
+}
+function saveData(){
+  const name=document.getElementById("clientName").value.trim()||"未入力";
+  const key=name+"_"+new Date().toLocaleDateString("ja-JP");
+  const saves=getSaves();
+  const data={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value,income:document.getElementById("income").value,sub:document.getElementById("sub").value};
+  ["housing","food","utility","comm","ins","edu","ent","other","saving"].forEach(id=>data[id]=document.getElementById(id).value);
+  saves[key]=data;localStorage.setItem(STORAGE_KEY,JSON.stringify(saves));
+  const shared=JSON.parse(localStorage.getItem("fp_shared")||"{}");
+  shared.income=Math.round((parseFloat(data.income)+parseFloat(data.sub))*12);
+  localStorage.setItem("fp_shared",JSON.stringify(shared));
+  
+let currentMode = 'simple';
+
+
+
+
+
+
+// CTA fields trigger update
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+
+  // 共有データに保存
+  const sharedData = {};
+  sharedData.clientName = document.getElementById('clientName')?.value || '';
+  if (document.getElementById('age')) sharedData.age = document.getElementById('age').value;
+  if (document.getElementById('income')) sharedData.income = document.getElementById('income').value;
+  if (document.getElementById('expense')) sharedData.expense = document.getElementById('expense').value;
+  if (document.getElementById('savings')) sharedData.savings = document.getElementById('savings').value;
+  if (document.getElementById('family')) sharedData.family = document.getElementById('family').value;
+  FPShared.save(sharedData);
+  refreshList();showToast("✅ 保存しました："+key);
+}
+function loadSelected(){
+  const key=document.getElementById("savedList").value;if(!key)return;
+  const d=getSaves()[key];if(!d)return;
+  document.getElementById("clientName").value=d.clientName||"";
+  document.getElementById("clientDate").value=d.clientDate||"";
+  document.getElementById("fpMemo").value=d.fpMemo||"";
+  ["income","sub","housing","food","utility","comm","ins","edu","ent","other","saving"].forEach(id=>{if(d[id])document.getElementById(id).value=d[id]});
+  calc();showToast("📂 読み込みました："+key);
+}
+function deleteSelected(){
+  const key=document.getElementById("savedList").value;if(!key)return;
+  if(!confirm(key+" を削除しますか？"))return;
+  const saves=getSaves();delete saves[key];localStorage.setItem(STORAGE_KEY,JSON.stringify(saves));
+  
+let currentMode = 'simple';
+
+
+
+
+
+
+// CTA fields trigger update
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+refreshList();showToast("🗑️ 削除しました");
+}
+function exportPDF(){
+  const name=document.getElementById("clientName").value||"家計診断";
+  const el=document.getElementById("report-area");
+  const opt={margin:[8,8,8,8],filename:name+"_家計診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};
+  showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("✅ PDF出力完了"));
+}
+
+function scoreItem(pct, ideal, isSaving) {
+  if(isSaving) {
+    if(pct >= 20) return 100;
+    if(pct >= 15) return 85;
+    if(pct >= 10) return 65;
+    if(pct >= 5)  return 40;
+    return 15;
+  }
+  const ratio = pct / ideal;
+  if(ratio <= 0.7) return 100;
+  if(ratio <= 1.0) return 90;
+  if(ratio <= 1.3) return 70;
+  if(ratio <= 1.6) return 50;
+  if(ratio <= 2.0) return 30;
+  return 10;
+}
+
+function getScoreColor(s) {
+  if(s>=80) return "#2a7a4f";
+  if(s>=60) return "#f39c12";
+  return "#c0392b";
+}
+
+function calc() {
+  const income = parseFloat(document.getElementById("income").value);
+  const sub    = parseFloat(document.getElementById("sub").value);
+  const ti     = income + sub;
+
+  document.getElementById("income-out").textContent = income.toFixed(1)+"万円";
+  document.getElementById("sub-out").textContent    = sub.toFixed(1)+"万円";
+
+  const allIds = ["housing","food","utility","comm","ins","edu","ent","other","saving"];
+  const vals = {};
+  let te = 0;
+  allIds.forEach(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    vals[id] = v; te += v;
+    document.getElementById(id+"-out").textContent = v.toFixed(1)+"万円";
+  });
+
+  const bal  = ti - te;
+  const srate = ti > 0 ? (vals.saving / ti) * 100 : 0;
+
+  // --- Item scores ---
+  const itemScores = {};
+  ITEMS.forEach(it => {
+    const pct = ti > 0 ? (vals[it.id] / ti) * 100 : 0;
+    itemScores[it.id] = { pct: Math.round(pct*10)/10, score: scoreItem(pct, it.ideal, it.id==="saving") };
+  });
+
+  // --- Total score (weighted) ---
+  let totalScore = 0;
+  ITEMS.forEach(it => { totalScore += itemScores[it.id].score * (it.weight / 100); });
+  // 収支ボーナス/ペナルティ
+  if(bal < 0) totalScore = Math.max(0, totalScore - 15);
+  else if(bal > 5) totalScore = Math.min(100, totalScore + 5);
+  totalScore = Math.round(totalScore);
+
+  // Stars & Rank
+  const stars = totalScore >= 90 ? 5 : totalScore >= 75 ? 4 : totalScore >= 60 ? 3 : totalScore >= 45 ? 2 : 1;
+  const rankInfo = totalScore >= 90 ? {label:"Sランク：最優秀",cls:"s"} : totalScore >= 75 ? {label:"Aランク：優秀",cls:"a"} : totalScore >= 60 ? {label:"Bランク：標準",cls:"b"} : {label:"Cランク：要改善",cls:"c"};
+
+  document.getElementById("total-score").textContent = totalScore;
+  document.getElementById("score-stars").textContent = "★".repeat(stars) + "☆".repeat(5-stars);
+  const rankEl = document.getElementById("score-rank");
+  rankEl.textContent = rankInfo.label; rankEl.className = "score-rank "+rankInfo.cls;
+
+  // Breakdown cards
+  document.getElementById("score-breakdown").innerHTML = ITEMS.map(it => {
+    const s = itemScores[it.id].score;
+    return `<div class="score-item">
+      <div class="score-item-label">${it.icon} ${it.label}</div>
+      <div class="score-item-val" style="color:${getScoreColor(s)}">${s}</div>
+      <div class="score-item-bar"><div class="score-item-bar-fill" style="width:${s}%;background:${getScoreColor(s)}"></div></div>
+    </div>`;
+  }).join("");
+
+  // --- AI Comment ---
+  const clientName = document.getElementById("clientName").value ? document.getElementById("clientName").value+"の" : "";
+  let aiText = "";
+  if(totalScore >= 90) {
+    aiText = `<span class="ai-highlight">${clientName}家計は非常に健全です。</span>貯蓄率${srate.toFixed(1)}%と高水準を維持しており、このペースで資産形成を続けると将来の備えも充実します。`;
+  } else if(totalScore >= 75) {
+    aiText = `${clientName}家計は<span class="ai-highlight">おおむね良好</span>です。`;
+    const weak = ITEMS.filter(it=>itemScores[it.id].score<70).map(it=>it.label);
+    if(weak.length > 0) aiText += `特に<span class="ai-warn">${weak.join("・")}</span>に改善の余地があります。`;
+  } else if(totalScore >= 60) {
+    aiText = `${clientName}家計はいくつかの改善点があります。`;
+    const worst = [...ITEMS].sort((a,b)=>itemScores[a.id].score-itemScores[b.id].score)[0];
+    aiText += `とりわけ<span class="ai-warn">${worst.label}</span>が課題です。`;
+    if(srate < 10) aiText += `貯蓄率${srate.toFixed(1)}%は目標の15%に向けて引き上げを検討しましょう。`;
+  } else {
+    aiText = `<span class="ai-warn">家計に要改善点が複数あります。</span>`;
+    if(bal < 0) aiText += `月次収支が${Math.abs(bal).toFixed(1)}万円の赤字状態です。固定費の見直しを最優先に進めてください。`;
+    else aiText += `収支はプラスですが、貯蓄率の向上が急務です。`;
+  }
+  // 具体的アドバイスを追加
+  const commPct = ti > 0 ? (vals.comm/ti)*100 : 0;
+  if(commPct > 5) {
+    const saveable = Math.round((vals.comm - ti*0.04)*10000);
+    aiText += `通信費は月<strong>${(saveable/10000).toFixed(1)}万円</strong>程度の削減が見込めます。`;
+  }
+  const insPct = ti > 0 ? (vals.ins/ti)*100 : 0;
+  if(insPct > 10) aiText += `保険料が収入の${insPct.toFixed(1)}%と高めです。保障内容の見直しをご検討ください。`;
+
+  document.getElementById("ai-text").innerHTML = aiText;
+
+  // --- Radar Chart ---
+  const radarLabels = ITEMS.map(it=>it.label);
+  const radarData   = ITEMS.map(it=>itemScores[it.id].score);
+  if(radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById("radarChart").getContext("2d"), {
+    type:"radar",
+    data:{labels:radarLabels,datasets:[{label:"スコア",data:radarData,backgroundColor:"rgba(200,169,110,.2)",borderColor:"#c8a96e",borderWidth:2,pointBackgroundColor:"#c8a96e",pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false,stepSize:20},pointLabels:{font:{size:11,family:"Noto Sans JP"},color:"#1a2744"},grid:{color:"rgba(0,0,0,.08)"},angleLines:{color:"rgba(0,0,0,.08)"}}},plugins:{legend:{display:false}}}
+  });
+
+  // --- Doughnut Chart ---
+  const nonZero = allIds.filter(id=>vals[id]>0);
+  const colors  = ["#1a2744","#2a7a4f","#c8a96e","#4a3aa7","#c0392b","#eb6834","#e87ba4","#888780","#2a7a4f"];
+  if(doughnutChart) doughnutChart.destroy();
+  doughnutChart = new Chart(document.getElementById("doughnutChart").getContext("2d"), {
+    type:"doughnut",
+    data:{labels:nonZero.map(id=>allIds.indexOf(id)<ITEMS.length?ITEMS.find(it=>it.id===id)?.label||id:id),datasets:[{data:nonZero.map(id=>vals[id]),backgroundColor:nonZero.map((_,i)=>colors[i%colors.length]),borderWidth:2,borderColor:"#ffffff"}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,font:{size:10},padding:8}},tooltip:{callbacks:{label:ctx=>ctx.label+": "+ctx.parsed.toFixed(1)+"万円"}}}}
+  });
+
+  // --- Items Table ---
+  document.getElementById("items-tbody").innerHTML = ITEMS.map(it => {
+    const s = itemScores[it.id].score;
+    const pct = itemScores[it.id].pct;
+    const cls = s>=80?"score-good":s>=60?"score-mid":"score-bad";
+    const eval_txt = s>=80?"◎ 良好":s>=60?"△ 注意":"✕ 要改善";
+    return `<tr>
+      <td>${it.icon} ${it.label}</td>
+      <td>${vals[it.id].toFixed(1)}万円</td>
+      <td>${pct}%</td>
+      <td>〜${it.ideal}%</td>
+      <td class="score-cell ${cls}">${s}点<div class="mini-bar"><div class="mini-bar-fill" style="width:${s}%;background:${getScoreColor(s)}"></div></div></td>
+      <td class="${cls}">${eval_txt}</td>
+    </tr>`;
+  }).join("");
+
+  // --- Action Items ---
+  const actions = [];
+  if(bal < 0) actions.push({icon:"🚨",text:`<strong>収支改善が最優先</strong>：月次収支が${Math.abs(bal).toFixed(1)}万円の赤字です。固定費の削減から着手してください。`});
+  if(srate < 10) actions.push({icon:"📈",text:`<strong>貯蓄率アップ</strong>：現在の貯蓄率${srate.toFixed(1)}%を15%以上に引き上げることを目標にしましょう。月${Math.round(ti*0.15-vals.saving*10)/10}万円増額が目安です。`});
+  if(commPct > 5) actions.push({icon:"📱",text:`<strong>通信費の見直し</strong>：格安SIMへの乗り換えや、プランの見直しで月2,000〜5,000円の削減が見込めます。`});
+  if(insPct > 10) actions.push({icon:"🛡️",text:`<strong>保険の見直し</strong>：保険料が収入の${insPct.toFixed(1)}%と高めです。FP相談で保障内容を精査することをおすすめします。`});
+  const housingPct = ti>0?(vals.housing/ti)*100:0;
+  if(housingPct > 30) actions.push({icon:"🏠",text:`<strong>住居費の負担軽減</strong>：住居費が収入の${housingPct.toFixed(1)}%と高めです。繰り上げ返済・借り換え・引越しを検討しましょう。`});
+  if(srate >= 20) actions.push({icon:"✅",text:`<strong>貯蓄は良好です</strong>：積立した資金をNISA・iDeCoで運用することで、さらに資産を増やせる可能性があります。`});
+  if(actions.length === 0) actions.push({icon:"🎉",text:"<strong>家計は非常に健全です</strong>。このバランスを維持しながら、資産運用の最適化をご検討ください。"});
+  document.getElementById("action-items").innerHTML = actions.map(a=>`<div class="advice-item"><div class="advice-icon">${a.icon}</div><div class="advice-text">${a.text}</div></div>`).join("");
+}
+
+
+let currentMode = 'simple';
+
+
+
+
+
+
+// CTA fields trigger update
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+refreshList();
+
+// 共有データ引き継ぎ
+FPShared.showBanner(['income']);
+const shared = JSON.parse(localStorage.getItem("fp_shared")||"{}");
+if(shared.income){
+  const mi = Math.min(Math.round(shared.income/12), 100);
+  document.getElementById("income").value = mi;
+}
+calc();
+</script>
+</body>
+</html>

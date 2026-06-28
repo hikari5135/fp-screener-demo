@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NISA試算診断｜FPナビ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+
+
+
+
+
+
+
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+
+  // 積立比較グリッド更新
+  const tsumitate2 = parseFloat(document.getElementById('tsumitate').value);
+  const years2 = parseInt(document.getElementById('years').value);
+  const rate2b = parseFloat(document.getElementById('rate').value)/100;
+  const compGrid = document.getElementById('compare-grid');
+  if (compGrid) {
+    const scenarios = [tsumitate2, tsumitate2+2, tsumitate2+5];
+    compGrid.innerHTML = scenarios.map((m,i) => {
+      let bal = 0;
+      for(let y=0;y<years2*12;y++) bal = bal*(1+rate2b/12) + m;
+      const label = i===0?'現在の積立':'月+'+(scenarios[i]-tsumitate2)+'万円増';
+      const diff = i===0?'':`+${Math.round(bal-(()=>{let b=0;for(let y=0;y<years2*12;y++)b=b*(1+rate2b/12)+tsumitate2;return b;})()).toLocaleString()}万円`;
+      return `<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;text-align:center">
+        <div style="font-size:10px;color:rgba(255,255,255,.6);margin-bottom:4px">${label}</div>
+        <div style="font-size:11px;color:var(--gold);margin-bottom:4px">月${m}万円積立</div>
+        <div style="font-size:20px;font-weight:700;color:#fff;font-family:'Noto Serif JP',serif">${Math.round(bal).toLocaleString()}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5)">万円</div>
+        ${diff?`<div style="font-size:11px;color:var(--gold);margin-top:4px">${diff}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  const aiEl = document.getElementById('ai-text');
+  if (aiEl) {
+    const prefix = getAITonePrefix ? getAITonePrefix() : '';
+    const nisaTotal2 = parseInt(document.getElementById('nisa-total').textContent.replace(/,/g,''))||0;
+    const taxBenefit2 = parseInt(document.getElementById('tax-benefit').textContent.replace(/,/g,''))||0;
+    aiEl.innerHTML = prefix + `${years2}年間の積立で<span style="color:var(--green);font-weight:700">${nisaTotal2.toLocaleString()}万円</span>の資産形成が見込まれます。課税口座と比べて<strong>${taxBenefit2.toLocaleString()}万円</strong>の税金が非課税になります。`;
+    const cb = document.getElementById('closing-box');
+    const ci = document.getElementById('closing-items');
+    if (cb && ci) {
+      cb.style.display = 'block';
+      ci.innerHTML = '<div class="closing-item">積立額を月2〜5万円増やすだけで老後資産が大幅に増えることを比較グラフで見せましょう。</div><div class="closing-item">投資信託の商品選定（インデックスファンド）の具体的な提案に進みましょう。</div><div class="closing-item">iDeCoとNISAの使い分けを整理して、最適な組み合わせを提案しましょう。</div>';
+    }
+  }
+
+
+
+// ===== FPナビ 共有データハブ =====
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const FPShared = {
+  // データ保存
+  save: function(data) {
+    const existing = FPShared.load();
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  },
+  // データ読込
+  load: function() {
+    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
+    catch(e) { return {}; }
+  },
+  // 共有バナー表示
+  showBanner: function(fields) {
+    const d = FPShared.load();
+    const matched = fields.filter(f => d[f]);
+    if (matched.length === 0) return;
+    const labels = {
+      clientName:'顧客名', age:'年齢', income:'年収',
+      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
+      children:'子ども人数', monthlyIncome:'月収入'
+    };
+    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
+    const banner = document.getElementById('shared-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
+        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
+        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
+    }
+  },
+  // フォームに値を適用（各ツールで上書き）
+  applyAll: function() {
+    const d = FPShared.load();
+    const apply = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== '') {
+        el.value = val;
+        // change/inputイベントを発火
+        el.dispatchEvent(new Event('input'));
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+    // 共通フィールド
+    if (d.clientName) apply('clientName', d.clientName);
+    if (d.age)        apply('age', d.age);
+    if (d.income)     apply('income', d.income);
+    if (d.expense)    apply('expense', d.expense);
+    if (d.savings)    apply('savings', d.savings);
+    if (d.family)     apply('family', d.family);
+    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
+  }
+};
+// ===== 共有データハブ ここまで =====
+
+
+// ===== スコア表示ユーティリティ =====
+function renderUnifiedScore(containerId, totalScore, breakdownItems) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const stars = '★'.repeat(totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1) +
+                '☆'.repeat(totalScore>=90?0:totalScore>=75?1:totalScore>=60?2:totalScore>=45?3:4);
+  const rankMap = {90:{l:'Sランク：最優秀',c:'s'},75:{l:'Aランク：優秀',c:'a'},60:{l:'Bランク：標準',c:'b'},0:{l:'Cランク：要改善',c:'c'}};
+  let rk = rankMap[0];
+  for (const threshold of [90,75,60,0]) { if (totalScore >= threshold) { rk = rankMap[threshold]; break; } }
+  const gc = s => s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b';
+  const breakdownHtml = breakdownItems.map(it =>
+    `<div class="score-breakdown-item">
+      <div class="score-breakdown-label">${it.icon} ${it.label}</div>
+      <div class="score-breakdown-val" style="color:${gc(it.score)}">${it.score}</div>
+      <div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:${it.score}%;background:${gc(it.score)}"></div></div>
+    </div>`
+  ).join('');
+  container.innerHTML = `
+    <div class="unified-score-header">
+      <div class="unified-score-main">
+        <div class="score-label">${container.dataset.label || 'スコア'}</div>
+        <div><span class="score-num">${totalScore}</span><span class="score-unit">点</span></div>
+        <div class="score-stars">${stars}</div>
+        <div class="score-rank ${rk.c}">${rk.l}</div>
+      </div>
+      <div class="score-breakdown-grid">${breakdownHtml}</div>
+    </div>`;
+}
+// ===== スコア表示ユーティリティ ここまで =====
+
+// PDF出力前にヘッダー・フッターを更新
+function updatePDFMeta() {
+  const name = document.getElementById('clientName')?.value || '';
+  const date = document.getElementById('clientDate')?.value || '';
+  const office = document.getElementById('fpOfficeName')?.value || '';
+  const fp = document.getElementById('fpFPName')?.value || '';
+  const contact = document.getElementById('fpContact')?.value || '';
+  const today = new Date().toLocaleDateString('ja-JP');
+  const cn = document.getElementById('pdf-client-name');
+  const cd = document.getElementById('pdf-client-date');
+  const pd = document.getElementById('pdf-today');
+  const pf = document.getElementById('pdf-fp-info');
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  if (pd) pd.textContent = today;
+  if (pf) {
+    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
+    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
+  }
+}
+
+// exportPDF関数を上書きして品質向上版に
+function exportPDF() {
+  updatePDFMeta();
+  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
+  const toolName = document.title.replace('｜FPナビ', '');
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: name + '_' + toolName + '_FPナビ.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+  showToast('📄 PDF生成中...');
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  } else {
+    window.print();
+  }
+}
+
+
+// ===== FPナビ共通機能 =====
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(el => {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+function toggleAIEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+function updateCTA() {
+  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  const box    = document.getElementById('cta-box');
+  const textEl = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    const lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else { box.style.display = 'none'; }
+}
+function getAITonePrefix() {
+  const el = document.getElementById('aiTone');
+  const tone = el ? el.value : 'normal';
+  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
+}
+['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateCTA);
+});
+// ===== ここまで共通機能 =====
+
+</script>
+<style>
+:root { --navy:#1a2744; --gold:#c8a96e; --cream:#f8f5ef; --white:#ffffff; --text:#1a2744; --muted:#6b7a99; --green:#2a7a4f; --green-light:#e8f5ee; --red:#c0392b; --red-light:#fdf0ee; --border:#e2ddd5; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--cream); color:var(--text); font-size:15px; line-height:1.7; }
+header { background:var(--navy); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+.logo { font-family:'Noto Serif JP',serif; color:var(--gold); font-size:16px; }
+.logo span { color:rgba(255,255,255,0.6); font-size:11px; font-family:'Noto Sans JP',sans-serif; display:block; }
+.badge { background:var(--gold); color:var(--navy); font-size:10px; font-weight:700; padding:3px 10px; border-radius:2px; }
+.hero { background:linear-gradient(135deg,var(--navy),#243460); padding:40px 32px 36px; text-align:center; }
+.hero-eye { color:var(--gold); font-size:10px; letter-spacing:0.25em; margin-bottom:12px; }
+.hero h1 { font-family:'Noto Serif JP',serif; color:#fff; font-size:26px; line-height:1.4; margin-bottom:10px; }
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-sub { color:rgba(255,255,255,0.65); font-size:13px; }
+.main { max-width:800px; margin:0 auto; padding:40px 24px 64px; }
+.section-title { font-size:11px; letter-spacing:0.2em; color:var(--muted); font-weight:500; margin-bottom:14px; margin-top:32px; border-left:3px solid var(--gold); padding-left:10px; }
+.nisa-info { background:var(--navy); color:var(--white); border-radius:8px; padding:16px 20px; margin-bottom:24px; font-size:13px; line-height:1.8; }
+.nisa-info strong { color:var(--gold); }
+.nisa-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.nisa-box { background:rgba(255,255,255,0.1); border-radius:6px; padding:12px 16px; }
+.nisa-box-title { font-size:11px; color:var(--gold); margin-bottom:6px; font-weight:700; }
+.row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.row label { font-size:13px; color:var(--muted); width:220px; flex-shrink:0; }
+.row input[type=range] { flex:1; accent-color:var(--navy); }
+.row .num { font-size:13px; font-weight:700; color:var(--navy); width:100px; text-align:right; flex-shrink:0; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:24px 0; }
+.card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.card-label { font-size:10px; color:var(--muted); margin-bottom:6px; }
+.card-val { font-size:20px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif; }
+.card-unit { font-size:12px; color:var(--muted); }
+.card.accent { border-color:var(--green); }
+.card.accent .card-val { color:var(--green); }
+.chart-wrap { position:relative; width:100%; height:280px; margin-top:16px; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+.compare-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.compare-title { font-size:12px; font-weight:700; color:var(--navy); margin-bottom:10px; }
+.compare-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px; }
+.compare-label { color:var(--muted); }
+.compare-val { color:var(--navy); font-weight:700; }
+.tax-save { background:var(--green-light); color:var(--green); font-size:14px; font-weight:700; padding:12px 16px; border-radius:6px; margin-bottom:16px; text-align:center; }
+.tip { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:12px 16px; font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:8px; }
+.tip strong { color:var(--text); font-weight:700; }
+.disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
+footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
+@media(max-width:600px){ .nisa-grid { grid-template-columns:1fr; } .compare-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ NISA試算診断</div></div>
+  <div class="badge">FP監修</div>
+</header>
+<div class="hero">
+  <div class="hero-eye">NISA SIMULATOR</div>
+  <h1>新NISAで<em>資産がいくら増える</em>か試算する</h1>
+  <p class="hero-sub">積立・成長投資枠の活用効果と非課税メリットをシミュレーション</p>
+</div>
+<div class="main">
+
+  <div class="nisa-info">
+    <strong>新NISA（2024年〜）の概要</strong>
+    <div class="nisa-grid">
+      <div class="nisa-box">
+        <div class="nisa-box-title">つみたて投資枠</div>
+        年間120万円まで／対象：投資信託等<br>非課税保有期間：無期限
+      </div>
+      <div class="nisa-box">
+        <div class="nisa-box-title">成長投資枠</div>
+        年間240万円まで／対象：株式・投信等<br>生涯投資枠：1,800万円（合計）
+      </div>
+    </div>
+    生涯投資枠1,800万円（うち成長投資枠は1,200万円まで）。売却すると枠が翌年復活。
+  </div>
+
+  <div class="section-title">積立条件を入力</div>
+  <div class="row"><label>現在の年齢</label><input type="range" min="18" max="60" step="1" value="30" id="age" oninput="calc()"><span class="num" id="age-out">30歳</span></div>
+  <div class="row"><label>積立期間</label><input type="range" min="1" max="40" step="1" value="20" id="years" oninput="calc()"><span class="num" id="years-out">20年</span></div>
+  <div class="row"><label>つみたて投資枠（月額）</label><input type="range" min="0" max="10" step="0.5" value="3" id="tsumitate" oninput="calc()"><span class="num" id="tsumitate-out">3.0万円</span></div>
+  <div class="row"><label>成長投資枠（年額）</label><input type="range" min="0" max="240" step="12" value="0" id="growth" oninput="calc()"><span class="num" id="growth-out">0万円</span></div>
+  <div class="row"><label>想定年利回り</label><input type="range" min="1" max="10" step="0.5" value="5" id="rate" oninput="calc()"><span class="num" id="rate-out">5.0%</span></div>
+
+
+  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:16px 0;position:relative">
+    <div style="position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">🤖 FPナビ AI診断</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:4px">
+      NISAアドバイザー
+      <button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button>
+    </div>
+    <div class="ai-text" id="ai-text" style="font-size:14px;color:var(--navy);line-height:1.9;font-weight:500">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="AIコメントをここで編集できます..."></textarea>
+  </div>
+  <div class="shared-banner" id="shared-banner"></div>
+  <div class="section-title">試算結果</div>
+  <div class="cards">
+    <div class="card"><div class="card-label">積立元本（合計）</div><div class="card-val" id="principal"></div><div class="card-unit">万円</div></div>
+    <div class="card accent"><div class="card-label">NISA運用後の資産</div><div class="card-val" id="nisa-total"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">運用益（非課税）</div><div class="card-val" id="gain"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">非課税メリット</div><div class="card-val" id="tax-benefit"></div><div class="card-unit">万円（税金の節約）</div></div>
+  </div>
+
+  <div class="tax-save" id="tax-save-msg"></div>
+
+  <div class="section-title">NISA vs 課税口座の比較</div>
+  <div class="compare-grid">
+    <div class="compare-card">
+      <div class="compare-title">✅ NISA口座（非課税）</div>
+      <div class="compare-row"><span class="compare-label">最終資産</span><span class="compare-val" id="c-nisa"></span></div>
+      <div class="compare-row"><span class="compare-label">運用益</span><span class="compare-val" id="c-nisa-gain"></span></div>
+      <div class="compare-row"><span class="compare-label">税金</span><span class="compare-val" style="color:var(--green)">0円（非課税）</span></div>
+      <div class="compare-row"><span class="compare-label">手取り</span><span class="compare-val" id="c-nisa-net"></span></div>
+    </div>
+    <div class="compare-card">
+      <div class="compare-title">📊 課税口座（参考比較）</div>
+      <div class="compare-row"><span class="compare-label">最終資産（税引前）</span><span class="compare-val" id="c-tax-gross"></span></div>
+      <div class="compare-row"><span class="compare-label">運用益</span><span class="compare-val" id="c-tax-gain"></span></div>
+      <div class="compare-row"><span class="compare-label">税金（約20.315%）</span><span class="compare-val" style="color:var(--red)" id="c-tax-amount"></span></div>
+      <div class="compare-row"><span class="compare-label">手取り</span><span class="compare-val" id="c-tax-net"></span></div>
+    </div>
+  </div>
+
+  <div class="chart-wrap"><canvas id="nisaChart"></canvas></div>
+
+  <div class="section-title">活用のポイント</div>
+  <div id="tips"></div>
+
+
+  <div class="cta-box" id="cta-box" style="display:none">
+    <div class="cta-box-title">📞 次のステップ</div>
+    <div class="cta-box-text" id="cta-text"></div>
+  </div>
+
+  <div class="closing-box" id="closing-box" style="display:none">
+    <div class="closing-title">💼 FP向け：次の提案ステップ（顧客には非表示）</div>
+    <div id="closing-items"></div>
+  </div>
+
+  <div style="background:var(--navy);border-radius:12px;padding:20px 24px;margin:16px 0;color:var(--white)">
+    <div style="font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:12px">📊 積立額を増やしたら？</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px" id="compare-grid"></div>
+  </div>
+
+  <!-- 次のアクション（マネタイズ導線） -->
+  <div class="next-action-box">
+    <div class="next-action-title">🔗 次のステップ ／ 関連診断ツール</div>
+    <div class="next-action-items">
+        <div class="next-action-item" onclick="window.location.href='fpnavi_07_retirement_v2.html'">
+          <div class="next-action-item-icon">🏦</div>
+          <div class="next-action-item-title">老後資金に活用</div>
+          <div class="next-action-item-desc">NISA積立で老後の不足額を解消するプランへ</div>
+          <div class="next-action-item-badge">老後資金診断へ</div>
+        </div>
+        <div class="next-action-item" onclick="window.location.href='fpnavi_01_lifeplan_v2.html'">
+          <div class="next-action-item-icon">📊</div>
+          <div class="next-action-item-title">ライフプランで確認</div>
+          <div class="next-action-item-desc">NISA運用を含めた総合ライフプランを作成</div>
+          <div class="next-action-item-badge">ライフプラン診断へ</div>
+        </div>
+    </div>
+  </div>
+  <div class="disclaimer">※このツールは新NISA制度の概要に基づく概算シミュレーターです。実際の運用成果・税制は変更される場合があります。投資には元本割れのリスクがあります。詳細はFP・金融機関にご相談ください。投資助言ではありません。</div>
+</div>
+<footer>FPナビ Life Planning Suite ／ NISA試算診断 ― 投資助言ではありません © 2026</footer>
+<script>
+let chart;
+const TAX_RATE = 0.20315;
+
+function calc() {
+  const age = parseInt(document.getElementById('age').value);
+  const years = parseInt(document.getElementById('years').value);
+  const tsumitate = parseFloat(document.getElementById('tsumitate').value);
+  const growth = parseFloat(document.getElementById('growth').value);
+  const rate = parseFloat(document.getElementById('rate').value) / 100;
+
+  document.getElementById('age-out').textContent = age + '歳';
+  document.getElementById('years-out').textContent = years + '年';
+  document.getElementById('tsumitate-out').textContent = tsumitate.toFixed(1) + '万円';
+  document.getElementById('growth-out').textContent = growth.toLocaleString() + '万円';
+  document.getElementById('rate-out').textContent = parseFloat(document.getElementById('rate').value).toFixed(1) + '%';
+
+  const annualTsumitate = tsumitate * 12;
+  const annualTotal = annualTsumitate + growth;
+  const principal = Math.round(annualTotal * years);
+
+  // NISA複利計算
+  let nisaBal = 0;
+  const nisaData = [0];
+  const principalData = [0];
+  let totalPrincipal = 0;
+  const labels = ['開始'];
+
+  for (let y = 1; y <= years; y++) {
+    nisaBal = nisaBal * (1 + rate) + annualTotal;
+    totalPrincipal += annualTotal;
+    if (y % 5 === 0 || y === years || y === 1) {
+      labels.push((age + y) + '歳');
+      nisaData.push(Math.round(nisaBal));
+      principalData.push(Math.round(totalPrincipal));
+    }
+  }
+
+  const nisaTotal = Math.round(nisaBal);
+  const gain = nisaTotal - principal;
+  const taxAmount = Math.round(gain * TAX_RATE);
+  const taxBenefit = taxAmount;
+  const taxNetTotal = nisaTotal - taxAmount;
+
+  document.getElementById('principal').textContent = principal.toLocaleString();
+  document.getElementById('nisa-total').textContent = nisaTotal.toLocaleString();
+  document.getElementById('gain').textContent = gain.toLocaleString();
+  document.getElementById('tax-benefit').textContent = taxBenefit.toLocaleString();
+  document.getElementById('tax-save-msg').textContent = `NISAを使うことで、課税口座と比べて約${taxBenefit.toLocaleString()}万円の税金が非課税になります`;
+
+  document.getElementById('c-nisa').textContent = nisaTotal.toLocaleString() + '万円';
+  document.getElementById('c-nisa-gain').textContent = gain.toLocaleString() + '万円';
+  document.getElementById('c-nisa-net').textContent = nisaTotal.toLocaleString() + '万円';
+  document.getElementById('c-tax-gross').textContent = nisaTotal.toLocaleString() + '万円';
+  document.getElementById('c-tax-gain').textContent = gain.toLocaleString() + '万円';
+  document.getElementById('c-tax-amount').textContent = '▲' + taxAmount.toLocaleString() + '万円';
+  document.getElementById('c-tax-net').textContent = taxNetTotal.toLocaleString() + '万円';
+
+  // 生涯投資枠チェック
+  const lifetimeUsed = Math.min(annualTotal * years, 1800);
+
+  const ctx = document.getElementById('nisaChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '元本', data: principalData, backgroundColor: '#c8a96e', borderWidth: 0, borderRadius: 4 },
+        { label: '運用益（非課税）', data: nisaData.map((v, i) => v - principalData[i]), backgroundColor: '#2a7a4f', borderWidth: 0, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + '万円' } }
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#6b7a99', font: { size: 11 } }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#6b7a99', font: { size: 11 }, callback: v => v.toLocaleString() + '万' }, grid: { color: '#e2ddd5' } }
+      }
+    }
+  });
+
+  const tips = [];
+  if (annualTotal > 360) tips.push('<div class="tip"><strong>年間投資上限に注意</strong>：つみたて投資枠120万円＋成長投資枠240万円＝年間360万円が上限です。上限を超えた分は課税口座での運用になります。</div>');
+  if (annualTotal * years > 1800) tips.push(`<div class="tip"><strong>生涯投資枠（1,800万円）の上限</strong>：この条件では生涯投資枠を超える試算になっています。超過分（約${Math.round(annualTotal * years - 1800).toLocaleString()}万円）は課税口座での運用をご検討ください。</div>`);
+  if (tsumitate === 0 && growth === 0) tips.push('<div class="tip"><strong>積立額を設定してください</strong>：つみたて投資枠または成長投資枠の月額・年額を設定すると試算できます。</div>');
+  tips.push('<div class="tip"><strong>長期・積立・分散が基本</strong>：NISAは長期間運用するほど複利効果が高まります。相場の変動に左右されず、継続的な積立が重要です。</div>');
+  if (rate >= 7) tips.push('<div class="tip"><strong>高利回りの設定に注意</strong>：7%以上の利回りは歴史的な株式市場の平均に近い水準ですが、将来の運用成果を保証するものではありません。元本割れのリスクもあります。</div>');
+  document.getElementById('tips').innerHTML = tips.join('');
+}
+calc();
+</script>
+</body>
+</html>

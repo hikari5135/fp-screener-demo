@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教育費シミュレーター｜FPナビ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+
+
+
+
+
+
+
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+
+  // AI・クロージング更新
+  const aiEl = document.getElementById('ai-text');
+  if (aiEl) {
+    const prefix = getAITonePrefix ? getAITonePrefix() : '';
+    const childAge2 = parseInt(document.getElementById('age').value);
+    const remaining2 = parseInt(document.getElementById('remaining').textContent.replace(/,/g,'')) || 0;
+    const yearsLeft = Math.max(1, 18 - childAge2);
+    const monthly = Math.round(remaining2 / yearsLeft / 12);
+    aiEl.innerHTML = prefix + (remaining2 > 2000
+      ? '<span style="color:var(--red);font-weight:700">教育費の準備が急務です。</span>今から月' + monthly.toLocaleString() + '万円の積立が必要です。'
+      : remaining2 > 0
+      ? '今から月<strong>' + monthly.toLocaleString() + '万円</strong>の積立で大学卒業まで準備できます。'
+      : '<span style="color:var(--green);font-weight:700">教育費の準備は概ね良好です。</span>');
+    // 学資 vs NISA比較
+    const rate_gak = 0.5, rate_nisa = 5;
+    let gak = 0, nis = 0;
+    for(let i=0;i<yearsLeft*12;i++){gak=gak*(1+rate_gak/100/12)+monthly;nis=nis*(1+rate_nisa/100/12)+monthly;}
+    document.getElementById('edu-gakushi').innerHTML = '返戻率105〜110%程度<br>月' + monthly.toLocaleString() + '万円×' + yearsLeft + '年<br>→約<strong>' + Math.round(gak).toLocaleString() + '万円</strong><br>元本保証・確実な準備';
+    document.getElementById('edu-nisa').innerHTML = '想定利回り5%の場合<br>月' + monthly.toLocaleString() + '万円×' + yearsLeft + '年<br>→約<strong>' + Math.round(nis).toLocaleString() + '万円</strong><br>非課税・高リターン期待';
+    // クロージング
+    const cb = document.getElementById('closing-box');
+    const ci = document.getElementById('closing-items');
+    if (cb && ci) {
+      cb.style.display = 'block';
+      ci.innerHTML = '<div class="closing-item">学資保険とNISAの比較提案が刺さるタイミングです。リスク許容度を確認しましょう。</div><div class="closing-item">児童手当（月1〜1.5万円）を積立に回すプランを提案すると具体的で響きます。</div>';
+    }
+  }
+
+
+
+// ===== FPナビ 共有データハブ =====
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const FPShared = {
+  // データ保存
+  save: function(data) {
+    const existing = FPShared.load();
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  },
+  // データ読込
+  load: function() {
+    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
+    catch(e) { return {}; }
+  },
+  // 共有バナー表示
+  showBanner: function(fields) {
+    const d = FPShared.load();
+    const matched = fields.filter(f => d[f]);
+    if (matched.length === 0) return;
+    const labels = {
+      clientName:'顧客名', age:'年齢', income:'年収',
+      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
+      children:'子ども人数', monthlyIncome:'月収入'
+    };
+    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
+    const banner = document.getElementById('shared-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
+        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
+        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
+    }
+  },
+  // フォームに値を適用（各ツールで上書き）
+  applyAll: function() {
+    const d = FPShared.load();
+    const apply = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== '') {
+        el.value = val;
+        // change/inputイベントを発火
+        el.dispatchEvent(new Event('input'));
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+    // 共通フィールド
+    if (d.clientName) apply('clientName', d.clientName);
+    if (d.age)        apply('age', d.age);
+    if (d.income)     apply('income', d.income);
+    if (d.expense)    apply('expense', d.expense);
+    if (d.savings)    apply('savings', d.savings);
+    if (d.family)     apply('family', d.family);
+    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
+  }
+};
+// ===== 共有データハブ ここまで =====
+
+
+// ===== スコア表示ユーティリティ =====
+function renderUnifiedScore(containerId, totalScore, breakdownItems) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const stars = '★'.repeat(totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1) +
+                '☆'.repeat(totalScore>=90?0:totalScore>=75?1:totalScore>=60?2:totalScore>=45?3:4);
+  const rankMap = {90:{l:'Sランク：最優秀',c:'s'},75:{l:'Aランク：優秀',c:'a'},60:{l:'Bランク：標準',c:'b'},0:{l:'Cランク：要改善',c:'c'}};
+  let rk = rankMap[0];
+  for (const threshold of [90,75,60,0]) { if (totalScore >= threshold) { rk = rankMap[threshold]; break; } }
+  const gc = s => s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b';
+  const breakdownHtml = breakdownItems.map(it =>
+    `<div class="score-breakdown-item">
+      <div class="score-breakdown-label">${it.icon} ${it.label}</div>
+      <div class="score-breakdown-val" style="color:${gc(it.score)}">${it.score}</div>
+      <div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:${it.score}%;background:${gc(it.score)}"></div></div>
+    </div>`
+  ).join('');
+  container.innerHTML = `
+    <div class="unified-score-header">
+      <div class="unified-score-main">
+        <div class="score-label">${container.dataset.label || 'スコア'}</div>
+        <div><span class="score-num">${totalScore}</span><span class="score-unit">点</span></div>
+        <div class="score-stars">${stars}</div>
+        <div class="score-rank ${rk.c}">${rk.l}</div>
+      </div>
+      <div class="score-breakdown-grid">${breakdownHtml}</div>
+    </div>`;
+}
+// ===== スコア表示ユーティリティ ここまで =====
+
+// PDF出力前にヘッダー・フッターを更新
+function updatePDFMeta() {
+  const name = document.getElementById('clientName')?.value || '';
+  const date = document.getElementById('clientDate')?.value || '';
+  const office = document.getElementById('fpOfficeName')?.value || '';
+  const fp = document.getElementById('fpFPName')?.value || '';
+  const contact = document.getElementById('fpContact')?.value || '';
+  const today = new Date().toLocaleDateString('ja-JP');
+  const cn = document.getElementById('pdf-client-name');
+  const cd = document.getElementById('pdf-client-date');
+  const pd = document.getElementById('pdf-today');
+  const pf = document.getElementById('pdf-fp-info');
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  if (pd) pd.textContent = today;
+  if (pf) {
+    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
+    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
+  }
+}
+
+// exportPDF関数を上書きして品質向上版に
+function exportPDF() {
+  updatePDFMeta();
+  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
+  const toolName = document.title.replace('｜FPナビ', '');
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: name + '_' + toolName + '_FPナビ.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+  showToast('📄 PDF生成中...');
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  } else {
+    window.print();
+  }
+}
+
+
+// ===== FPナビ共通機能 =====
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(el => {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+function toggleAIEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+function updateCTA() {
+  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  const box    = document.getElementById('cta-box');
+  const textEl = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    const lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else { box.style.display = 'none'; }
+}
+function getAITonePrefix() {
+  const el = document.getElementById('aiTone');
+  const tone = el ? el.value : 'normal';
+  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
+}
+['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateCTA);
+});
+// ===== ここまで共通機能 =====
+
+</script>
+<style>
+:root { --navy:#1a2744; --gold:#c8a96e; --cream:#f8f5ef; --white:#ffffff; --text:#1a2744; --muted:#6b7a99; --green:#2a7a4f; --green-light:#e8f5ee; --red:#c0392b; --red-light:#fdf0ee; --yellow:#f39c12; --yellow-light:#fef9e7; --border:#e2ddd5; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--cream); color:var(--text); font-size:15px; line-height:1.7; }
+header { background:var(--navy); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+.logo { font-family:'Noto Serif JP',serif; color:var(--gold); font-size:16px; }
+.logo span { color:rgba(255,255,255,0.6); font-size:11px; font-family:'Noto Sans JP',sans-serif; display:block; }
+.badge { background:var(--gold); color:var(--navy); font-size:10px; font-weight:700; padding:3px 10px; border-radius:2px; }
+.hero { background:linear-gradient(135deg,var(--navy),#243460); padding:40px 32px 36px; text-align:center; }
+.hero-eye { color:var(--gold); font-size:10px; letter-spacing:0.25em; margin-bottom:12px; }
+.hero h1 { font-family:'Noto Serif JP',serif; color:#fff; font-size:26px; line-height:1.4; margin-bottom:10px; }
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-sub { color:rgba(255,255,255,0.65); font-size:13px; }
+.main { max-width:800px; margin:0 auto; padding:40px 24px 64px; }
+.section-title { font-size:11px; letter-spacing:0.2em; color:var(--muted); font-weight:500; margin-bottom:14px; margin-top:32px; border-left:3px solid var(--gold); padding-left:10px; }
+.row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.row label { font-size:13px; color:var(--muted); width:200px; flex-shrink:0; }
+.row input[type=range] { flex:1; accent-color:var(--navy); }
+.row .num { font-size:13px; font-weight:700; color:var(--navy); width:90px; text-align:right; flex-shrink:0; }
+.row select { font-size:13px; padding:5px 10px; border:1px solid var(--border); border-radius:4px; background:var(--white); color:var(--navy); }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:24px 0; }
+.card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.card-label { font-size:10px; color:var(--muted); margin-bottom:6px; }
+.card-val { font-size:20px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif; }
+.card-unit { font-size:12px; color:var(--muted); }
+.card.accent { border-color:var(--navy); }
+table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:16px; background:var(--white); border-radius:8px; overflow:hidden; }
+th { text-align:left; padding:10px 12px; font-size:11px; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); background:var(--cream); }
+td { padding:10px 12px; color:var(--text); border-bottom:1px solid var(--border); text-align:right; }
+td:first-child { text-align:left; }
+tr:last-child td { border-bottom:none; font-weight:700; background:var(--cream); }
+.chart-wrap { position:relative; width:100%; height:260px; margin-top:16px; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.badge-warn { display:inline-block; background:var(--yellow-light); color:var(--yellow); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.badge-ok { display:inline-block; background:var(--green-light); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.tip { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:12px 16px; font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:8px; }
+.tip strong { color:var(--text); font-weight:700; }
+.disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
+footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 教育費シミュレーター</div></div>
+  <div class="badge">FP監修</div>
+</header>
+<div class="hero">
+  <div class="hero-eye">EDUCATION COST SIMULATOR</div>
+  <h1>教育費の<em>総額</em>を試算する</h1>
+  <p class="hero-sub">幼稚園から大学まで、公立・私立の選択で変わる教育費を一括試算</p>
+</div>
+<div class="main">
+  <div class="section-title">お子さんの情報</div>
+  <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc()"><span class="num" id="age-out">0歳</span></div>
+  <div class="row"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
+
+  <div class="section-title">学校の種別を選択</div>
+  <div class="row"><label>幼稚園・保育園</label><select id="kinder" onchange="calc()"><option value="public">公立（認可保育所）</option><option value="private" selected>私立幼稚園</option></select></div>
+  <div class="row"><label>小学校</label><select id="elem" onchange="calc()"><option value="public" selected>公立小学校</option><option value="private">私立小学校</option></select></div>
+  <div class="row"><label>中学校</label><select id="middle" onchange="calc()"><option value="public" selected>公立中学校</option><option value="private">私立中学校</option></select></div>
+  <div class="row"><label>高等学校</label><select id="high" onchange="calc()"><option value="public" selected>公立高校</option><option value="private">私立高校</option></select></div>
+  <div class="row"><label>大学</label><select id="univ" onchange="calc()"><option value="public">国公立大学</option><option value="private_lit" selected>私立大学（文系）</option><option value="private_sci">私立大学（理系）</option><option value="private_med">私立大学（医歯薬系）</option></select></div>
+
+
+  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:16px 0;position:relative">
+    <div style="position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">🤖 FPナビ AI診断</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:4px">
+      教育費アドバイザー
+      <button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button>
+    </div>
+    <div class="ai-text" id="ai-text" style="font-size:14px;color:var(--navy);line-height:1.9;font-weight:500">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="AIコメントをここで編集できます..."></textarea>
+  </div>
+  <div class="shared-banner" id="shared-banner"></div>
+  <div class="section-title">試算結果</div>
+  <div id="badge-area"></div>
+  <div class="cards">
+    <div class="card"><div class="card-label">教育費の総額（1人）</div><div class="card-val" id="total1"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">教育費の総額（全員）</div><div class="card-val" id="totalAll"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">月平均の教育費</div><div class="card-val" id="monthly"></div><div class="card-unit">万円/月</div></div>
+    <div class="card accent"><div class="card-label">今から大学卒業まで</div><div class="card-val" id="remaining"></div><div class="card-unit">万円（残り分）</div></div>
+  </div>
+
+  <div class="section-title">学校別の内訳</div>
+  <table>
+    <thead><tr><th>学校種別</th><th>種別</th><th>在学年数</th><th>年間費用（目安）</th><th>合計（目安）</th></tr></thead>
+    <tbody id="detail-table"></tbody>
+  </table>
+
+  <div class="chart-wrap"><canvas id="eduChart"></canvas></div>
+
+  <div class="section-title">準備のポイント</div>
+  <div id="tips"></div>
+
+
+  <div class="cta-box" id="cta-box" style="display:none">
+    <div class="cta-box-title">📞 次のステップ</div>
+    <div class="cta-box-text" id="cta-text"></div>
+  </div>
+
+  <div class="closing-box" id="closing-box" style="display:none">
+    <div class="closing-title">💼 FP向け：次の提案ステップ（顧客には非表示）</div>
+    <div id="closing-items"></div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:18px 22px;margin:16px 0">
+    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px">📊 準備方法の比較：学資保険 vs NISA（つみたて投資枠）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">🛡️ 学資保険</div>
+        <div id="edu-gakushi" style="font-size:13px;color:var(--navy);line-height:1.7">計算中...</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📈 NISA（つみたて投資枠）</div>
+        <div id="edu-nisa" style="font-size:13px;color:var(--navy);line-height:1.7">計算中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 次のアクション（マネタイズ導線） -->
+  <div class="next-action-box">
+    <div class="next-action-title">🔗 次のステップ ／ 関連診断ツール</div>
+    <div class="next-action-items">
+        <div class="next-action-item" onclick="window.location.href='fpnavi_household_v2.html'">
+          <div class="next-action-item-icon">📊</div>
+          <div class="next-action-item-title">家計全体のバランスを確認</div>
+          <div class="next-action-item-desc">教育費を含めた家計の健全度を診断</div>
+          <div class="next-action-item-badge">家計診断へ</div>
+        </div>
+        <div class="next-action-item" onclick="window.location.href='fpnavi_08_nisa_v2.html'">
+          <div class="next-action-item-icon">📈</div>
+          <div class="next-action-item-title">NISAで教育費を準備</div>
+          <div class="next-action-item-desc">非課税で効率よく教育費を積立</div>
+          <div class="next-action-item-badge">NISA試算へ</div>
+        </div>
+    </div>
+  </div>
+  <div class="disclaimer">※教育費の目安は文部科学省「子供の学習費調査」等の公開データをもとにした概算です。実際の費用は地域・学校・習い事等により大きく異なります。詳細はFP等の専門家にご相談ください。</div>
+</div>
+<footer>FPナビ Life Planning Suite ／ 教育費シミュレーター ― 投資助言ではありません © 2026</footer>
+<script>
+let chart;
+
+const COSTS = {
+  kinder: { public: 25, private: 53 },
+  elem:   { public: 211, private: 1000 },
+  middle: { public: 161, private: 430 },
+  high:   { public: 154, private: 315 },
+  univ:   { public: 243, private_lit: 400, private_sci: 450, private_med: 1500 }
+};
+const YEARS = { kinder:3, elem:6, middle:3, high:3, univ:4 };
+const LABELS = {
+  kinder: '幼稚園・保育園', elem: '小学校', middle: '中学校', high: '高等学校', univ: '大学'
+};
+const KIND_LABELS = {
+  public: '公立', private: '私立',
+  private_lit: '私立（文系）', private_sci: '私立（理系）', private_med: '私立（医歯薬）'
+};
+
+function calc() {
+  const childAge = parseInt(document.getElementById('age').value);
+  const children = parseInt(document.getElementById('children').value);
+  document.getElementById('age-out').textContent = childAge + '歳';
+  document.getElementById('children-out').textContent = children + '人';
+
+  const stages = ['kinder', 'elem', 'middle', 'high', 'univ'];
+  const stageAges = { kinder:[3,4,5], elem:[6,7,8,9,10,11], middle:[12,13,14], high:[15,16,17], univ:[18,19,20,21] };
+
+  const rows = [];
+  let total1 = 0;
+  let remaining = 0;
+
+  stages.forEach(s => {
+    const kind = document.getElementById(s).value;
+    const cost = COSTS[s][kind];
+    const years = YEARS[s];
+    const subtotal = cost * years;
+    total1 += subtotal;
+
+    const startAge = stageAges[s][0];
+    const endAge = stageAges[s][stageAges[s].length - 1];
+    const isRemaining = endAge >= childAge;
+    const yearsRemaining = isRemaining ? Math.min(years, endAge - Math.max(childAge, startAge) + 1) : 0;
+    remaining += cost * yearsRemaining;
+
+    rows.push({ label: LABELS[s], kind: KIND_LABELS[kind], years, annual: cost, subtotal });
+  });
+
+  const totalAll = total1 * children;
+  const totalMonths = 22 * 12;
+  const monthly = Math.round(total1 / totalMonths * 10) / 10;
+
+  document.getElementById('total1').textContent = total1.toLocaleString();
+  document.getElementById('totalAll').textContent = totalAll.toLocaleString();
+  document.getElementById('monthly').textContent = monthly.toFixed(1);
+  document.getElementById('remaining').textContent = (remaining * children).toLocaleString();
+
+  const isHeavy = total1 > 2000;
+  document.getElementById('badge-area').innerHTML = isHeavy
+    ? '<div class="badge-warn">教育費が高め：早めの積立計画をおすすめします</div>'
+    : '<div class="badge-ok">標準的な教育費水準です</div>';
+
+  const tbody = rows.map((r, i) => {
+    const isLast = i === rows.length - 1;
+    return `<tr${isLast ? '' : ''}><td>${r.label}</td><td>${r.kind}</td><td style="text-align:center">${r.years}年</td><td>${r.annual.toLocaleString()}万円</td><td>${r.subtotal.toLocaleString()}万円</td></tr>`;
+  }).join('');
+  document.getElementById('detail-table').innerHTML = tbody + `<tr><td>合計</td><td>-</td><td style="text-align:center">22年</td><td>-</td><td>${total1.toLocaleString()}万円</td></tr>`;
+
+  const ctx = document.getElementById('eduChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.label),
+      datasets: [{ label: '教育費（万円）', data: rows.map(r => r.subtotal), backgroundColor: ['#1a2744','#2a7a4f','#c8a96e','#c0392b','#4a3aa7'], borderWidth: 0, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y.toLocaleString() + '万円' } } },
+      scales: { x: { ticks: { color: '#6b7a99', font: { size: 11 } }, grid: { display: false } }, y: { ticks: { color: '#6b7a99', font: { size: 11 }, callback: v => v.toLocaleString() + '万' }, grid: { color: '#e2ddd5' } } }
+    }
+  });
+
+  const tips = [];
+  if (childAge <= 3) tips.push('<div class="tip"><strong>学資保険・ジュニアNISA代替</strong>：お子さんが小さいうちから積立を始めると、大学入学までに計画的に準備できます。月々の積立額の目安：<strong>' + Math.round(remaining * children / ((18 - childAge) * 12)).toLocaleString() + '万円</strong>（今から大学卒業まで均等積立の場合）。</div>');
+  if (total1 > 1500) tips.push('<div class="tip"><strong>教育費の分散</strong>：高額になる場合は、奨学金・教育ローン・給付型奨学金の活用も検討しましょう。大学の給付型奨学金は家計基準を確認してください。</div>');
+  tips.push('<div class="tip"><strong>習い事・塾費用は別途</strong>：このシミュレーターは学校教育費のみの試算です。塾・習い事・部活動費用等は別途加算が必要です。</div>');
+  if (children >= 2) tips.push('<div class="tip"><strong>教育費の重なり時期に注意</strong>：お子さんが複数いる場合、同時に在学する時期は教育費が重なります。キャッシュフロー計画を立てることが重要です。</div>');
+  document.getElementById('tips').innerHTML = tips.join('');
+}
+
+calc();
+</script>
+</body>
+</html>

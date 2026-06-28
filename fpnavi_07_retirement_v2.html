@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老後資金診断｜FPナビ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+
+
+
+
+
+
+
+
+  if (el) el.addEventListener('input', updateCTA);
+});
+
+
+  // 解決策・AIコメント更新
+  const shortageEl = document.getElementById('shortage');
+  const shortage2 = shortageEl ? parseInt(shortageEl.textContent.replace(/,/g,'')) : 0;
+  const retireAge2 = parseInt(document.getElementById('retire').value);
+  const age2 = parseInt(document.getElementById('age').value);
+  const yearsLeft2 = Math.max(1, retireAge2 - age2);
+  const solBox = document.getElementById('solution-box');
+  const solText = document.getElementById('solution-text');
+  if (solBox && solText && shortage2 > 0) {
+    solBox.style.display = 'block';
+    const monthly2 = Math.round(shortage2 / yearsLeft2 / 12 * 10) / 10;
+    const nisaMonthly = Math.round(shortage2 / ((Math.pow(1.05, yearsLeft2)-1)/0.05/12) / 10000) / 10;
+    solText.innerHTML = '毎月<span style="color:var(--gold);font-size:24px;font-family:'Noto Serif JP',serif"> ' + monthly2.toFixed(1) + ' </span>万円の積立で不足を解消できます<br><span style="font-size:12px;color:rgba(255,255,255,.7)">※NISA（利回り5%）なら月' + nisaMonthly.toFixed(1) + '万円の積立で同等効果</span>';
+    const cb = document.getElementById('closing-box');
+    const ci = document.getElementById('closing-items');
+    if (cb && ci) {
+      cb.style.display = 'block';
+      ci.innerHTML = '<div class="closing-item">不足額' + shortage2.toLocaleString() + '万円の解消プランとして、iDeCo＋NISAの組み合わせ提案が有効です。</div><div class="closing-item">企業型DC（確定拠出年金）の活用状況も確認しましょう。</div><div class="closing-item">繰り下げ受給シミュレーション（65→70歳）を追加提案すると年金への理解が深まります。</div>';
+    }
+  } else if (solBox) {
+    solBox.style.display = 'none';
+  }
+  const aiEl = document.getElementById('ai-text');
+  if (aiEl) {
+    const prefix = getAITonePrefix ? getAITonePrefix() : '';
+    if (shortage2 > 0) {
+      aiEl.innerHTML = prefix + '老後に<span style="color:var(--red);font-weight:700">' + shortage2.toLocaleString() + '万円の不足</span>が見込まれます。今から計画的な準備を始めることで解消できます。';
+    } else {
+      aiEl.innerHTML = prefix + '<span style="color:var(--green);font-weight:700">老後資金は概ね充足しています。</span>iDeCoやNISAの活用でさらに資産を増やすことを検討しましょう。';
+    }
+  }
+
+
+
+// ===== FPナビ 共有データハブ =====
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const FPShared = {
+  // データ保存
+  save: function(data) {
+    const existing = FPShared.load();
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  },
+  // データ読込
+  load: function() {
+    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
+    catch(e) { return {}; }
+  },
+  // 共有バナー表示
+  showBanner: function(fields) {
+    const d = FPShared.load();
+    const matched = fields.filter(f => d[f]);
+    if (matched.length === 0) return;
+    const labels = {
+      clientName:'顧客名', age:'年齢', income:'年収',
+      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
+      children:'子ども人数', monthlyIncome:'月収入'
+    };
+    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
+    const banner = document.getElementById('shared-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
+        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
+        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
+    }
+  },
+  // フォームに値を適用（各ツールで上書き）
+  applyAll: function() {
+    const d = FPShared.load();
+    const apply = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== '') {
+        el.value = val;
+        // change/inputイベントを発火
+        el.dispatchEvent(new Event('input'));
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+    // 共通フィールド
+    if (d.clientName) apply('clientName', d.clientName);
+    if (d.age)        apply('age', d.age);
+    if (d.income)     apply('income', d.income);
+    if (d.expense)    apply('expense', d.expense);
+    if (d.savings)    apply('savings', d.savings);
+    if (d.family)     apply('family', d.family);
+    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
+  }
+};
+// ===== 共有データハブ ここまで =====
+
+
+// ===== スコア表示ユーティリティ =====
+function renderUnifiedScore(containerId, totalScore, breakdownItems) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const stars = '★'.repeat(totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1) +
+                '☆'.repeat(totalScore>=90?0:totalScore>=75?1:totalScore>=60?2:totalScore>=45?3:4);
+  const rankMap = {90:{l:'Sランク：最優秀',c:'s'},75:{l:'Aランク：優秀',c:'a'},60:{l:'Bランク：標準',c:'b'},0:{l:'Cランク：要改善',c:'c'}};
+  let rk = rankMap[0];
+  for (const threshold of [90,75,60,0]) { if (totalScore >= threshold) { rk = rankMap[threshold]; break; } }
+  const gc = s => s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b';
+  const breakdownHtml = breakdownItems.map(it =>
+    `<div class="score-breakdown-item">
+      <div class="score-breakdown-label">${it.icon} ${it.label}</div>
+      <div class="score-breakdown-val" style="color:${gc(it.score)}">${it.score}</div>
+      <div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:${it.score}%;background:${gc(it.score)}"></div></div>
+    </div>`
+  ).join('');
+  container.innerHTML = `
+    <div class="unified-score-header">
+      <div class="unified-score-main">
+        <div class="score-label">${container.dataset.label || 'スコア'}</div>
+        <div><span class="score-num">${totalScore}</span><span class="score-unit">点</span></div>
+        <div class="score-stars">${stars}</div>
+        <div class="score-rank ${rk.c}">${rk.l}</div>
+      </div>
+      <div class="score-breakdown-grid">${breakdownHtml}</div>
+    </div>`;
+}
+// ===== スコア表示ユーティリティ ここまで =====
+
+// PDF出力前にヘッダー・フッターを更新
+function updatePDFMeta() {
+  const name = document.getElementById('clientName')?.value || '';
+  const date = document.getElementById('clientDate')?.value || '';
+  const office = document.getElementById('fpOfficeName')?.value || '';
+  const fp = document.getElementById('fpFPName')?.value || '';
+  const contact = document.getElementById('fpContact')?.value || '';
+  const today = new Date().toLocaleDateString('ja-JP');
+  const cn = document.getElementById('pdf-client-name');
+  const cd = document.getElementById('pdf-client-date');
+  const pd = document.getElementById('pdf-today');
+  const pf = document.getElementById('pdf-fp-info');
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  if (pd) pd.textContent = today;
+  if (pf) {
+    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
+    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
+  }
+}
+
+// exportPDF関数を上書きして品質向上版に
+function exportPDF() {
+  updatePDFMeta();
+  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
+  const toolName = document.title.replace('｜FPナビ', '');
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: name + '_' + toolName + '_FPナビ.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+  showToast('📄 PDF生成中...');
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  } else {
+    window.print();
+  }
+}
+
+
+// ===== FPナビ共通機能 =====
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(el => {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+function toggleAIEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+function updateCTA() {
+  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  const box    = document.getElementById('cta-box');
+  const textEl = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    const lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else { box.style.display = 'none'; }
+}
+function getAITonePrefix() {
+  const el = document.getElementById('aiTone');
+  const tone = el ? el.value : 'normal';
+  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
+}
+['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateCTA);
+});
+// ===== ここまで共通機能 =====
+
+</script>
+<style>
+:root { --navy:#1a2744; --gold:#c8a96e; --cream:#f8f5ef; --white:#ffffff; --text:#1a2744; --muted:#6b7a99; --green:#2a7a4f; --green-light:#e8f5ee; --red:#c0392b; --red-light:#fdf0ee; --yellow:#f39c12; --yellow-light:#fef9e7; --border:#e2ddd5; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--cream); color:var(--text); font-size:15px; line-height:1.7; }
+header { background:var(--navy); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+.logo { font-family:'Noto Serif JP',serif; color:var(--gold); font-size:16px; }
+.logo span { color:rgba(255,255,255,0.6); font-size:11px; font-family:'Noto Sans JP',sans-serif; display:block; }
+.badge { background:var(--gold); color:var(--navy); font-size:10px; font-weight:700; padding:3px 10px; border-radius:2px; }
+.hero { background:linear-gradient(135deg,var(--navy),#243460); padding:40px 32px 36px; text-align:center; }
+.hero-eye { color:var(--gold); font-size:10px; letter-spacing:0.25em; margin-bottom:12px; }
+.hero h1 { font-family:'Noto Serif JP',serif; color:#fff; font-size:26px; line-height:1.4; margin-bottom:10px; }
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-sub { color:rgba(255,255,255,0.65); font-size:13px; }
+.main { max-width:800px; margin:0 auto; padding:40px 24px 64px; }
+.section-title { font-size:11px; letter-spacing:0.2em; color:var(--muted); font-weight:500; margin-bottom:14px; margin-top:32px; border-left:3px solid var(--gold); padding-left:10px; }
+.row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.row label { font-size:13px; color:var(--muted); width:210px; flex-shrink:0; }
+.row input[type=range] { flex:1; accent-color:var(--navy); }
+.row .num { font-size:13px; font-weight:700; color:var(--navy); width:100px; text-align:right; flex-shrink:0; }
+.row select { font-size:13px; padding:5px 10px; border:1px solid var(--border); border-radius:4px; background:var(--white); color:var(--navy); }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:24px 0; }
+.card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.card-label { font-size:10px; color:var(--muted); margin-bottom:6px; }
+.card-val { font-size:20px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif; }
+.card-unit { font-size:12px; color:var(--muted); }
+.card.danger { border-color:var(--red); }
+.card.danger .card-val { color:var(--red); }
+.card.safe { border-color:var(--green); }
+.card.safe .card-val { color:var(--green); }
+.badge-ng { display:inline-block; background:var(--red-light); color:var(--red); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.badge-ok { display:inline-block; background:var(--green-light); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.cashflow-table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:16px; background:var(--white); border-radius:8px; overflow:hidden; }
+.cashflow-table th { text-align:center; padding:10px 12px; font-size:11px; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); background:var(--cream); }
+.cashflow-table td { padding:8px 12px; color:var(--text); border-bottom:1px solid var(--border); text-align:right; }
+.cashflow-table td:first-child { text-align:left; }
+.cashflow-table tr.deficit td { color:var(--red); }
+.chart-wrap { position:relative; width:100%; height:260px; margin-top:16px; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.tip { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:12px 16px; font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:8px; }
+.tip strong { color:var(--text); font-weight:700; }
+.disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
+footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 老後資金診断</div></div>
+  <div class="badge">FP監修</div>
+</header>
+<div class="hero">
+  <div class="hero-eye">RETIREMENT FUND CALCULATOR</div>
+  <h1>老後の<em>資金不足額</em>を計算する</h1>
+  <p class="hero-sub">公的年金との差額から、必要な老後資金を試算</p>
+</div>
+<div class="main">
+  <div class="section-title">基本情報</div>
+  <div class="row"><label>現在の年齢</label><input type="range" min="20" max="65" step="1" value="45" id="age" oninput="calc()"><span class="num" id="age-out">45歳</span></div>
+  <div class="row"><label>退職予定年齢</label><input type="range" min="55" max="70" step="1" value="65" id="retire" oninput="calc()"><span class="num" id="retire-out">65歳</span></div>
+  <div class="row"><label>想定寿命</label><input type="range" min="75" max="100" step="1" value="90" id="life" oninput="calc()"><span class="num" id="life-out">90歳</span></div>
+  <div class="row"><label>現在の貯蓄・投資資産</label><input type="range" min="0" max="5000" step="100" value="500" id="assets" oninput="calc()"><span class="num" id="assets-out">500万円</span></div>
+  <div class="row"><label>退職金（見込み）</label><input type="range" min="0" max="3000" step="100" value="500" id="severance" oninput="calc()"><span class="num" id="severance-out">500万円</span></div>
+  <div class="row"><label>運用利回り（退職後）</label><input type="range" min="0" max="4" step="0.1" value="1" id="rate" oninput="calc()"><span class="num" id="rate-out">1.0%</span></div>
+
+  <div class="section-title">老後の収入・支出</div>
+  <div class="row"><label>月々の生活費（老後）</label><input type="range" min="10" max="50" step="1" value="25" id="expense" oninput="calc()"><span class="num" id="expense-out">25万円</span></div>
+  <div class="row"><label>公的年金の受給見込み（月）</label><input type="range" min="5" max="30" step="1" value="15" id="pension" oninput="calc()"><span class="num" id="pension-out">15万円</span></div>
+  <div class="row"><label>その他収入（月・パート等）</label><input type="range" min="0" max="20" step="1" value="0" id="other" oninput="calc()"><span class="num" id="other-out">0万円</span></div>
+
+
+  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:16px 0;position:relative">
+    <div style="position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">🤖 FPナビ AI診断</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:4px">
+      老後資金アドバイザー
+      <button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button>
+    </div>
+    <div class="ai-text" id="ai-text" style="font-size:14px;color:var(--navy);line-height:1.9;font-weight:500">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="AIコメントをここで編集できます..."></textarea>
+  </div>
+  <div class="shared-banner" id="shared-banner"></div>
+  <div class="section-title">試算結果</div>
+  <div id="badge-area"></div>
+  <div class="cards">
+    <div class="card"><div class="card-label">老後の年数</div><div class="card-val" id="retire-years"></div><div class="card-unit">年間</div></div>
+    <div class="card"><div class="card-label">月々の収支（老後）</div><div class="card-val" id="monthly-gap"></div><div class="card-unit">万円/月</div></div>
+    <div class="card"><div class="card-label">老後に必要な総資金</div><div class="card-val" id="need-total"></div><div class="card-unit">万円</div></div>
+    <div class="card" id="gap-card"><div class="card-label">不足額（目安）</div><div class="card-val" id="shortage"></div><div class="card-unit">万円</div></div>
+  </div>
+
+  <div class="section-title">退職後のキャッシュフロー（5年ごと）</div>
+  <table class="cashflow-table">
+    <thead><tr><th>年齢</th><th>年数</th><th>年間収入</th><th>年間支出</th><th>年間収支</th><th>資産残高</th></tr></thead>
+    <tbody id="cf-table"></tbody>
+  </table>
+
+  <div class="chart-wrap"><canvas id="retireChart"></canvas></div>
+
+  <div class="section-title">準備のポイント</div>
+  <div id="tips"></div>
+
+
+  <div class="cta-box" id="cta-box" style="display:none">
+    <div class="cta-box-title">📞 次のステップ</div>
+    <div class="cta-box-text" id="cta-text"></div>
+  </div>
+
+  <div class="closing-box" id="closing-box" style="display:none">
+    <div class="closing-title">💼 FP向け：次の提案ステップ（顧客には非表示）</div>
+    <div id="closing-items"></div>
+  </div>
+
+  <div id="solution-box" style="background:var(--navy);border-radius:12px;padding:20px 24px;margin:16px 0;color:var(--white);display:none">
+    <div style="font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:10px">💡 不足を解消するには</div>
+    <div id="solution-text" style="font-size:15px;font-weight:700;line-height:1.9"></div>
+  </div>
+
+  <!-- 次のアクション（マネタイズ導線） -->
+  <div class="next-action-box">
+    <div class="next-action-title">🔗 次のステップ ／ 関連診断ツール</div>
+    <div class="next-action-items">
+        <div class="next-action-item" onclick="window.location.href='fpnavi_08_nisa_v2.html'">
+          <div class="next-action-item-icon">📈</div>
+          <div class="next-action-item-title">NISAで不足を補う</div>
+          <div class="next-action-item-desc">不足額をNISA積立で解消するプランを試算</div>
+          <div class="next-action-item-badge">NISA試算へ</div>
+        </div>
+        <div class="next-action-item" onclick="window.location.href='fpnavi_02_insurance_v2.html'">
+          <div class="next-action-item-icon">🛡️</div>
+          <div class="next-action-item-title">介護保険を検討</div>
+          <div class="next-action-item-desc">老後の介護リスクへの備えを確認</div>
+          <div class="next-action-item-badge">保険診断へ</div>
+        </div>
+    </div>
+  </div>
+  <div class="disclaimer">※このツールは概算を示す参考ツールです。実際の年金額・退職金・運用成果は個人の状況により異なります。詳細はFP・社会保険労務士等の専門家にご相談ください。投資助言ではありません。</div>
+</div>
+<footer>FPナビ Life Planning Suite ／ 老後資金診断 ― 投資助言ではありません © 2026</footer>
+<script>
+let chart;
+function calc() {
+  const age = parseInt(document.getElementById('age').value);
+  const retire = parseInt(document.getElementById('retire').value);
+  const life = parseInt(document.getElementById('life').value);
+  const assets = parseInt(document.getElementById('assets').value);
+  const severance = parseInt(document.getElementById('severance').value);
+  const rate = parseFloat(document.getElementById('rate').value) / 100;
+  const expense = parseInt(document.getElementById('expense').value);
+  const pension = parseInt(document.getElementById('pension').value);
+  const other = parseInt(document.getElementById('other').value);
+
+  document.getElementById('age-out').textContent = age + '歳';
+  document.getElementById('retire-out').textContent = retire + '歳';
+  document.getElementById('life-out').textContent = life + '歳';
+  document.getElementById('assets-out').textContent = assets.toLocaleString() + '万円';
+  document.getElementById('severance-out').textContent = severance.toLocaleString() + '万円';
+  document.getElementById('rate-out').textContent = parseFloat(document.getElementById('rate').value).toFixed(1) + '%';
+  document.getElementById('expense-out').textContent = expense + '万円';
+  document.getElementById('pension-out').textContent = pension + '万円';
+  document.getElementById('other-out').textContent = other + '万円';
+
+  const retireYears = Math.max(0, life - retire);
+  const monthlyGap = expense - pension - other;
+  const annualGap = monthlyGap * 12;
+
+  // 退職時の資産（現在の資産を退職まで積立なし・運用なしで概算）
+  const retireAssets = assets + severance;
+
+  // 退職後の資産推移
+  let bal = retireAssets;
+  const labels = [], data = [];
+  const cfRows = [];
+  for (let y = 0; y <= retireYears; y++) {
+    const currentAge = retire + y;
+    labels.push(currentAge + '歳');
+    data.push(Math.round(bal));
+    if (y % 5 === 0 && y < retireYears) {
+      const annualIncome = (pension + other) * 12;
+      const annualExpense = expense * 12;
+      const annualCashflow = annualIncome - annualExpense;
+      cfRows.push({ age: currentAge, years: y + 1, income: annualIncome, expense: annualExpense, cf: annualCashflow, bal: Math.round(bal) });
+    }
+    bal = bal * (1 + rate) - annualGap;
+  }
+
+  const finalBal = Math.round(bal);
+  const shortage = finalBal < 0 ? Math.abs(finalBal) : 0;
+  const needTotal = Math.max(0, Math.round(annualGap * retireYears));
+
+  document.getElementById('retire-years').textContent = retireYears;
+  document.getElementById('monthly-gap').textContent = (monthlyGap >= 0 ? '+' : '') + monthlyGap;
+  document.getElementById('need-total').textContent = needTotal.toLocaleString();
+  document.getElementById('shortage').textContent = shortage > 0 ? shortage.toLocaleString() : '充足';
+
+  const gapCard = document.getElementById('gap-card');
+  gapCard.classList.remove('danger', 'safe');
+  gapCard.classList.add(shortage > 0 ? 'danger' : 'safe');
+
+  document.getElementById('badge-area').innerHTML = shortage > 0
+    ? `<div class="badge-ng">老後資金が約${shortage.toLocaleString()}万円不足する見込みです</div>`
+    : '<div class="badge-ok">現在の試算では老後資金は充足しています</div>';
+
+  document.getElementById('cf-table').innerHTML = cfRows.map(r => `
+    <tr class="${r.cf < 0 ? 'deficit' : ''}">
+      <td>${r.age}歳</td>
+      <td>${r.years}年目</td>
+      <td>${r.income.toLocaleString()}万円</td>
+      <td>${r.expense.toLocaleString()}万円</td>
+      <td>${r.cf >= 0 ? '+' : ''}${r.cf.toLocaleString()}万円</td>
+      <td>${r.bal.toLocaleString()}万円</td>
+    </tr>`).join('');
+
+  const ctx = document.getElementById('retireChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: '資産残高（万円）', data, borderColor: data[data.length-1] > 0 ? '#2a7a4f' : '#c0392b', backgroundColor: data[data.length-1] > 0 ? 'rgba(42,122,79,0.07)' : 'rgba(192,57,43,0.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y.toLocaleString() + '万円' } } }, scales: { x: { ticks: { maxTicksLimit: 8, color: '#6b7a99', font: { size: 11 } }, grid: { color: '#e2ddd5' } }, y: { ticks: { color: '#6b7a99', font: { size: 11 }, callback: v => v.toLocaleString() + '万' }, grid: { color: '#e2ddd5' } } } }
+  });
+
+  const tips = [];
+  if (shortage > 0) {
+    const monthsLeft = Math.max(1, (retire - age) * 12);
+    const monthlyNeeded = Math.round(shortage / monthsLeft);
+    tips.push(`<div class="tip"><strong>毎月の積立目安</strong>：不足額${shortage.toLocaleString()}万円を退職までの${retire - age}年間で準備する場合、月々約<strong>${monthlyNeeded.toLocaleString()}万円</strong>の積立が必要です（運用なしの場合）。</div>`);
+  }
+  if (pension < 15) tips.push('<div class="tip"><strong>年金受給額の確認</strong>：ねんきんネット（日本年金機構）で自分の年金見込み額を確認しましょう。60歳以降も任意加入することで年金額を増やせます。</div>');
+  tips.push('<div class="tip"><strong>iDeCo・NISA の活用</strong>：iDeCoは掛金が全額所得控除になり、老後資金準備に有効です。NISAと組み合わせることで非課税メリットを最大化できます。</div>');
+  if (other === 0) tips.push('<div class="tip"><strong>老後の就労収入</strong>：65歳以降も週数日のパートタイム就労を行うことで、資産の取り崩しペースを大幅に緩やかにできます。</div>');
+  document.getElementById('tips').innerHTML = tips.join('');
+}
+calc();
+</script>
+</body>
+</html>
