@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ライフプランシミュレーター｜FPデモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --navy: #1a2744; --gold: #c8a96e; --cream: #f8f5ef;
+  --white: #ffffff; --text: #1a2744; --muted: #6b7a99;
+  --green: #2a7a4f; --green-light: #e8f5ee; --red: #c0392b;
+  --border: #e2ddd5; --shadow: 0 4px 24px rgba(26,39,68,0.10);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--cream); color:var(--text); font-size:15px; line-height:1.7; }
+header { background:var(--navy); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+.logo { font-family:'Noto Serif JP',serif; color:var(--gold); font-size:16px; }
+.logo span { color:rgba(255,255,255,0.6); font-size:11px; font-family:'Noto Sans JP',sans-serif; display:block; }
+.badge { background:var(--gold); color:var(--navy); font-size:10px; font-weight:700; padding:3px 10px; border-radius:2px; }
+.hero { background:linear-gradient(135deg,var(--navy),#243460); padding:40px 32px 36px; text-align:center; }
+.hero-eye { color:var(--gold); font-size:10px; letter-spacing:0.25em; margin-bottom:12px; }
+.hero h1 { font-family:'Noto Serif JP',serif; color:#fff; font-size:26px; line-height:1.4; margin-bottom:10px; }
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-sub { color:rgba(255,255,255,0.65); font-size:13px; }
+.main { max-width:800px; margin:0 auto; padding:40px 24px 64px; }
+.section-title { font-size:11px; letter-spacing:0.2em; color:var(--muted); font-weight:500; margin-bottom:14px; margin-top:32px; }
+.row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.row label { font-size:13px; color:var(--muted); width:180px; flex-shrink:0; }
+.row input[type=range] { flex:1; accent-color:var(--navy); }
+.row .num { font-size:13px; font-weight:700; color:var(--navy); width:90px; text-align:right; flex-shrink:0; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:24px 0; }
+.card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.card-label { font-size:10px; color:var(--muted); margin-bottom:6px; }
+.card-val { font-size:22px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif; }
+.card-unit { font-size:12px; color:var(--muted); }
+.badge-ok { display:inline-block; background:var(--green-light); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.badge-ng { display:inline-block; background:#fdf0ee; color:var(--red); font-size:12px; font-weight:700; padding:6px 14px; border-radius:4px; margin-bottom:16px; }
+.chart-wrap { position:relative; width:100%; height:260px; margin-top:16px; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
+footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
+@media(max-width:600px){ .row { flex-wrap:wrap; } .row label { width:100%; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">FPデモ集<span>ライフプランシミュレーター</span></div>
+  <div class="badge">FP監修</div>
+</header>
+<div class="hero">
+  <div class="hero-eye">LIFE PLAN SIMULATOR</div>
+  <h1>将来の資産を<em>見える化</em>する</h1>
+  <p class="hero-sub">年齢・年収・支出・老後目標を入力して資産推移を確認</p>
+</div>
+<div class="main">
+  <div class="section-title">基本情報を入力</div>
+  <div class="row"><label>現在の年齢</label><input type="range" min="20" max="60" step="1" value="35" id="age" oninput="calc()"><span class="num" id="age-out">35歳</span></div>
+  <div class="row"><label>年収（手取り）</label><input type="range" min="200" max="1200" step="10" value="400" id="income" oninput="calc()"><span class="num" id="income-out">400万円</span></div>
+  <div class="row"><label>年間支出</label><input type="range" min="150" max="800" step="10" value="300" id="expense" oninput="calc()"><span class="num" id="expense-out">300万円</span></div>
+  <div class="row"><label>現在の貯蓄額</label><input type="range" min="0" max="2000" step="50" value="200" id="savings" oninput="calc()"><span class="num" id="savings-out">200万円</span></div>
+  <div class="row"><label>想定運用利回り</label><input type="range" min="0" max="5" step="0.1" value="2" id="rate" oninput="calc()"><span class="num" id="rate-out">2.0%</span></div>
+  <div class="row"><label>老後の年間支出</label><input type="range" min="100" max="500" step="10" value="240" id="retire-exp" oninput="calc()"><span class="num" id="retire-exp-out">240万円</span></div>
+  <div class="row"><label>年金受給見込み額</label><input type="range" min="0" max="300" step="10" value="150" id="pension" oninput="calc()"><span class="num" id="pension-out">150万円</span></div>
+
+  <div class="section-title">試算結果</div>
+  <div id="badge-area"></div>
+  <div class="cards">
+    <div class="card"><div class="card-label">65歳時の推定資産</div><div class="card-val" id="asset65">-</div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">毎年の貯蓄額</div><div class="card-val" id="annual-save">-</div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">老後の年間不足額</div><div class="card-val" id="annual-gap">-</div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">資産が尽きる年齢</div><div class="card-val" id="zero-age">-</div><div class="card-unit">歳（目安）</div></div>
+  </div>
+  <div class="chart-wrap"><canvas id="lpChart"></canvas></div>
+  <div class="disclaimer">※このシミュレーターは概算を示す参考ツールです。実際の資産形成には税金・インフレ・退職金・医療費等が影響します。詳細はFP等の専門家にご相談ください。投資助言ではありません。</div>
+</div>
+<footer>© GrantFlow 阪本 光 ／ FPデモ集 ― 投資助言ではありません</footer>
+
+<script>
+let chart;
+function calc() {
+  const age = parseInt(document.getElementById('age').value);
+  const income = parseInt(document.getElementById('income').value);
+  const expense = parseInt(document.getElementById('expense').value);
+  const savings = parseInt(document.getElementById('savings').value);
+  const rate = parseFloat(document.getElementById('rate').value) / 100;
+  const retireExp = parseInt(document.getElementById('retire-exp').value);
+  const pension = parseInt(document.getElementById('pension').value);
+  document.getElementById('age-out').textContent = age + '歳';
+  document.getElementById('income-out').textContent = income + '万円';
+  document.getElementById('expense-out').textContent = expense + '万円';
+  document.getElementById('savings-out').textContent = savings + '万円';
+  document.getElementById('rate-out').textContent = parseFloat(document.getElementById('rate').value).toFixed(1) + '%';
+  document.getElementById('retire-exp-out').textContent = retireExp + '万円';
+  document.getElementById('pension-out').textContent = pension + '万円';
+  const annualSave = income - expense;
+  const retireAge = 65;
+  let asset = savings;
+  const labels = [], data = [];
+  for (let a = age; a <= 95; a++) {
+    labels.push(a + '歳'); data.push(Math.round(asset));
+    if (a < retireAge) { asset = asset * (1 + rate) + annualSave; }
+    else { const gap = retireExp - pension; asset = asset * (1 + rate) - (gap > 0 ? gap : 0); }
+  }
+  const asset65 = data[retireAge - age] || 0;
+  const annualGap = Math.max(0, retireExp - pension);
+  let zeroAge = '95超';
+  for (let i = retireAge - age; i < data.length; i++) { if (data[i] <= 0) { zeroAge = (age + i) + ''; break; } }
+  document.getElementById('asset65').textContent = asset65.toLocaleString();
+  document.getElementById('annual-save').textContent = annualSave >= 0 ? annualSave.toLocaleString() : '▲' + Math.abs(annualSave).toLocaleString();
+  document.getElementById('annual-gap').textContent = annualGap > 0 ? annualGap.toLocaleString() : '0';
+  document.getElementById('zero-age').textContent = zeroAge;
+  const isOk = asset65 > annualGap * 25;
+  document.getElementById('badge-area').innerHTML = isOk ? '<div class="badge-ok">老後資金は概ね充足しています</div>' : '<div class="badge-ng">老後資金の不足が見込まれます</div>';
+  const ctx = document.getElementById('lpChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'資産残高（万円）', data, borderColor:'#1a2744', backgroundColor:'rgba(26,39,68,0.07)', borderWidth:2, pointRadius:0, fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toLocaleString() + '万円' } } }, scales:{ x:{ ticks:{ maxTicksLimit:10, color:'#6b7a99', font:{size:11} }, grid:{ color:'#e2ddd5' } }, y:{ ticks:{ color:'#6b7a99', font:{size:11}, callback: v => v.toLocaleString() + '万' }, grid:{ color:'#e2ddd5' } } } } });
+}
+calc();
+</script>
+</body>
+</html>

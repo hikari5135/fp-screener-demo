@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保険見直しチェックツール｜FPデモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --navy:#1a2744; --gold:#c8a96e; --cream:#f8f5ef; --white:#ffffff; --text:#1a2744; --muted:#6b7a99; --green:#2a7a4f; --green-light:#e8f5ee; --red:#c0392b; --red-light:#fdf0ee; --yellow:#f39c12; --yellow-light:#fef9e7; --border:#e2ddd5; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--cream); color:var(--text); font-size:15px; line-height:1.7; }
+header { background:var(--navy); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+.logo { font-family:'Noto Serif JP',serif; color:var(--gold); font-size:16px; }
+.logo span { color:rgba(255,255,255,0.6); font-size:11px; font-family:'Noto Sans JP',sans-serif; display:block; }
+.badge { background:var(--gold); color:var(--navy); font-size:10px; font-weight:700; padding:3px 10px; border-radius:2px; }
+.hero { background:linear-gradient(135deg,var(--navy),#243460); padding:40px 32px 36px; text-align:center; }
+.hero-eye { color:var(--gold); font-size:10px; letter-spacing:0.25em; margin-bottom:12px; }
+.hero h1 { font-family:'Noto Serif JP',serif; color:#fff; font-size:26px; line-height:1.4; margin-bottom:10px; }
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-sub { color:rgba(255,255,255,0.65); font-size:13px; }
+.main { max-width:800px; margin:0 auto; padding:40px 24px 64px; }
+.section-title { font-size:11px; letter-spacing:0.2em; color:var(--muted); font-weight:500; margin-bottom:14px; margin-top:32px; border-left:3px solid var(--gold); padding-left:10px; }
+.row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.row label { font-size:13px; color:var(--muted); width:180px; flex-shrink:0; }
+.row input[type=range] { flex:1; accent-color:var(--navy); }
+.row .num { font-size:13px; font-weight:700; color:var(--navy); width:90px; text-align:right; flex-shrink:0; }
+.row select { font-size:13px; padding:5px 10px; border:1px solid var(--border); border-radius:4px; background:var(--white); color:var(--navy); }
+.check-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.check-row label { font-size:13px; color:var(--text); }
+.check-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--navy); }
+.sub-detail { margin-left:28px; margin-bottom:4px; }
+.score-box { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin:24px 0; display:flex; align-items:baseline; gap:8px; }
+.score-num { font-size:42px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif; }
+.score-label { font-size:13px; color:var(--muted); }
+.result-item { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px; background:var(--white); }
+.result-icon { font-size:18px; flex-shrink:0; margin-top:2px; }
+.result-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:4px; }
+.result-desc { font-size:12px; color:var(--muted); line-height:1.6; }
+.b-ok { display:inline-block; background:var(--green-light); color:var(--green); font-size:10px; padding:2px 8px; border-radius:2px; margin-left:6px; }
+.b-ng { display:inline-block; background:var(--red-light); color:var(--red); font-size:10px; padding:2px 8px; border-radius:2px; margin-left:6px; }
+.b-warn { display:inline-block; background:var(--yellow-light); color:var(--yellow); font-size:10px; padding:2px 8px; border-radius:2px; margin-left:6px; }
+.run-btn { width:100%; background:var(--navy); color:var(--white); border:none; padding:14px; font-size:15px; font-family:'Noto Sans JP',sans-serif; font-weight:700; border-radius:6px; cursor:pointer; margin:24px 0; letter-spacing:0.1em; }
+.run-btn:hover { background:#243460; }
+.disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
+footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">FPデモ集<span>保険見直しチェックツール</span></div>
+  <div class="badge">FP監修</div>
+</header>
+<div class="hero">
+  <div class="hero-eye">INSURANCE CHECK TOOL</div>
+  <h1>保険の<em>過不足</em>を診断する</h1>
+  <p class="hero-sub">現在の保険内容を入力して改善ポイントを確認</p>
+</div>
+<div class="main">
+  <div class="section-title">基本情報</div>
+  <div class="row"><label>年齢</label><input type="range" min="20" max="65" step="1" value="35" id="age" oninput="update()"><span class="num" id="age-out">35歳</span></div>
+  <div class="row"><label>家族構成</label><select id="family" onchange="update()"><option value="single">独身</option><option value="couple">既婚・子なし</option><option value="family" selected>既婚・子あり</option></select></div>
+  <div class="row"><label>年収（手取り）</label><input type="range" min="200" max="1200" step="10" value="400" id="income" oninput="update()"><span class="num" id="income-out">400万円</span></div>
+  <div class="row"><label>住宅ローン残高</label><input type="range" min="0" max="5000" step="100" value="2000" id="loan" oninput="update()"><span class="num" id="loan-out">2,000万円</span></div>
+
+  <div class="section-title">現在加入している保険</div>
+  <div class="check-row"><input type="checkbox" id="hasLife" onchange="update()" checked><label for="hasLife">生命保険（死亡保障）に加入している</label></div>
+  <div class="sub-detail" id="life-detail">
+    <div class="row"><label>死亡保障額</label><input type="range" min="0" max="5000" step="100" value="1000" id="lifeCover" oninput="update()"><span class="num" id="life-out">1,000万円</span></div>
+  </div>
+  <div class="check-row"><input type="checkbox" id="hasMed" onchange="update()" checked><label for="hasMed">医療保険に加入している</label></div>
+  <div class="sub-detail" id="med-detail">
+    <div class="row"><label>入院日額</label><input type="range" min="0" max="15000" step="1000" value="5000" id="medDaily" oninput="update()"><span class="num" id="med-out">5,000円</span></div>
+  </div>
+  <div class="check-row"><input type="checkbox" id="hasCancer" onchange="update()"><label for="hasCancer">がん保険に加入している</label></div>
+  <div class="check-row"><input type="checkbox" id="hasIncome" onchange="update()"><label for="hasIncome">就業不能保険（収入保障）に加入している</label></div>
+  <div class="check-row"><input type="checkbox" id="hasLong" onchange="update()"><label for="hasLong">介護保険（民間）に加入している</label></div>
+
+  <button class="run-btn" onclick="diagnose()">診断する</button>
+
+  <div id="result" style="display:none;">
+    <div class="section-title">診断結果</div>
+    <div class="score-box"><span class="score-num" id="score-num">0</span><span class="score-label">/ 100点（保険カバレッジスコア）</span></div>
+    <div id="result-items"></div>
+    <div class="disclaimer">※このツールは公開情報をもとにした参考診断です。保険の最適化には個別の事情が影響します。詳細はFP・保険代理店にご相談ください。投資・保険助言ではありません。</div>
+  </div>
+</div>
+<footer>© GrantFlow 阪本 光 ／ FPデモ集 ― 投資助言ではありません</footer>
+<script>
+function update() {
+  const age = document.getElementById('age').value;
+  const income = parseInt(document.getElementById('income').value);
+  const loan = parseInt(document.getElementById('loan').value);
+  const medDaily = parseInt(document.getElementById('medDaily').value);
+  const lifeCover = parseInt(document.getElementById('lifeCover').value);
+  document.getElementById('age-out').textContent = age + '歳';
+  document.getElementById('income-out').textContent = income.toLocaleString() + '万円';
+  document.getElementById('loan-out').textContent = loan.toLocaleString() + '万円';
+  document.getElementById('life-out').textContent = lifeCover.toLocaleString() + '万円';
+  document.getElementById('med-out').textContent = medDaily.toLocaleString() + '円';
+  document.getElementById('life-detail').style.display = document.getElementById('hasLife').checked ? 'block' : 'none';
+  document.getElementById('med-detail').style.display = document.getElementById('hasMed').checked ? 'block' : 'none';
+}
+function diagnose() {
+  const age = parseInt(document.getElementById('age').value);
+  const family = document.getElementById('family').value;
+  const income = parseInt(document.getElementById('income').value);
+  const loan = parseInt(document.getElementById('loan').value);
+  const hasLife = document.getElementById('hasLife').checked;
+  const lifeCover = parseInt(document.getElementById('lifeCover').value);
+  const hasMed = document.getElementById('hasMed').checked;
+  const medDaily = parseInt(document.getElementById('medDaily').value);
+  const hasCancer = document.getElementById('hasCancer').checked;
+  const hasIncome = document.getElementById('hasIncome').checked;
+  const needLife = family === 'family' || family === 'couple';
+  const recLifeCover = loan + (needLife ? income * 5 : 0);
+  const items = []; let score = 0;
+  if (needLife) {
+    if (!hasLife) items.push({ icon:'⚠️', title:'死亡保障が未加入', badge:'ng', desc:`家族がいる場合、死亡保障は必須です。推奨額の目安：${recLifeCover.toLocaleString()}万円程度。` });
+    else if (lifeCover < recLifeCover) { items.push({ icon:'⚠️', title:'死亡保障が不足している可能性', badge:'warn', desc:`現在の保障額（${lifeCover.toLocaleString()}万円）は推奨額（${recLifeCover.toLocaleString()}万円）を下回っています。` }); score += 10; }
+    else { items.push({ icon:'✅', title:'死亡保障は充足しています', badge:'ok', desc:`現在の保障額（${lifeCover.toLocaleString()}万円）は概ね適切です。` }); score += 25; }
+  } else {
+    if (hasLife && lifeCover > 500) { items.push({ icon:'⚠️', title:'死亡保障が過剰な可能性', badge:'warn', desc:'独身・扶養家族なしの場合、高額な死亡保障は保険料の無駄になることがあります。' }); score += 15; }
+    else { items.push({ icon:'✅', title:'死亡保障は適切です', badge:'ok', desc:'現在の状況に対して死亡保障の水準は概ね適切です。' }); score += 25; }
+  }
+  if (!hasMed) items.push({ icon:'⚠️', title:'医療保険が未加入', badge:'ng', desc:'入院・手術時の自己負担に備えるため、医療保険への加入を検討してください。' });
+  else if (medDaily < 3000) { items.push({ icon:'⚠️', title:'入院日額がやや低め', badge:'warn', desc:`入院日額${medDaily.toLocaleString()}円は低めです。5,000円以上が一般的な目安です。` }); score += 10; }
+  else { items.push({ icon:'✅', title:'医療保険は充足しています', badge:'ok', desc:`入院日額${medDaily.toLocaleString()}円と概ね適切な水準です。` }); score += 25; }
+  if (!hasCancer) items.push({ icon:'⚠️', title:'がん保険が未加入', badge:'warn', desc:`日本人の2人に1人はがんに罹患するとされています。${age >= 40 ? '40代以上は特にリスクが高まります。' : ''}がん保険・特約の追加を検討してください。` });
+  else { items.push({ icon:'✅', title:'がん保険に加入済み', badge:'ok', desc:'がんへの備えができています。' }); score += 20; }
+  if (!hasIncome && family === 'family') items.push({ icon:'⚠️', title:'就業不能保険が未加入', badge:'warn', desc:'家族がいる場合は就業不能保険・収入保障保険の検討をおすすめします。' });
+  else if (hasIncome) { items.push({ icon:'✅', title:'就業不能保険に加入済み', badge:'ok', desc:'働けなくなった場合の収入への備えができています。' }); score += 20; }
+  document.getElementById('score-num').textContent = Math.min(score, 100);
+  document.getElementById('result-items').innerHTML = items.map(it => `
+    <div class="result-item">
+      <span class="result-icon">${it.icon}</span>
+      <div><div class="result-title">${it.title}<span class="b-${it.badge}">${it.badge === 'ok' ? '充足' : '要検討'}</span></div><div class="result-desc">${it.desc}</div></div>
+    </div>`).join('');
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').scrollIntoView({ behavior:'smooth' });
+}
+update();
+</script>
+</body>
+</html>
