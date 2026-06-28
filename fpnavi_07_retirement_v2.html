@@ -319,10 +319,10 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
   <div class="section-title">基本情報</div>
   <div class="row"><label>現在の年齢</label><input type="range" min="20" max="65" step="1" value="45" id="age" oninput="calc()"><span class="num" id="age-out">45歳</span></div>
   <div class="row"><label>退職予定年齢</label><input type="range" min="55" max="70" step="1" value="65" id="retire" oninput="calc()"><span class="num" id="retire-out">65歳</span></div>
-  <div class="row"><label>想定寿命</label><input type="range" min="75" max="100" step="1" value="90" id="life" oninput="calc()"><span class="num" id="life-out">90歳</span></div>
+  <div class="row detail-only"><label>想定寿命</label><input type="range" min="75" max="100" step="1" value="90" id="life" oninput="calc()"><span class="num" id="life-out">90歳</span></div>
   <div class="row"><label>現在の貯蓄・投資資産</label><input type="range" min="0" max="5000" step="100" value="500" id="assets" oninput="calc()"><span class="num" id="assets-out">500万円</span></div>
   <div class="row"><label>退職金（見込み）</label><input type="range" min="0" max="3000" step="100" value="500" id="severance" oninput="calc()"><span class="num" id="severance-out">500万円</span></div>
-  <div class="row"><label>運用利回り（退職後）</label><input type="range" min="0" max="4" step="0.1" value="1" id="rate" oninput="calc()"><span class="num" id="rate-out">1.0%</span></div>
+  <div class="row detail-only"><label>運用利回り（退職後）</label><input type="range" min="0" max="4" step="0.1" value="1" id="rate" oninput="calc()"><span class="num" id="rate-out">1.0%</span></div>
 
   <div class="section-title">老後の収入・支出</div>
   <div class="row"><label>月々の生活費（老後）</label><input type="range" min="10" max="50" step="1" value="25" id="expense" oninput="calc()"><span class="num" id="expense-out">25万円</span></div>

@@ -361,11 +361,11 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   <div class="section-title">現在加入している保険</div>
   <div class="chk-row"><input type="checkbox" id="hasLife" onchange="calc()" checked><label for="hasLife">生命保険（死亡保障）に加入している</label></div>
   <div id="life-detail" style="margin-left:26px">
-    <div class="row"><label>死亡保障額</label><input type="range" min="0" max="5000" step="100" value="1000" id="lifeCover" oninput="calc()"><span class="num" id="life-out">1,000万円</span></div>
+    <div class="row detail-only"><label>死亡保障額</label><input type="range" min="0" max="5000" step="100" value="1000" id="lifeCover" oninput="calc()"><span class="num" id="life-out">1,000万円</span></div>
   </div>
   <div class="chk-row"><input type="checkbox" id="hasMed" onchange="calc()" checked><label for="hasMed">医療保険に加入している</label></div>
   <div id="med-detail" style="margin-left:26px">
-    <div class="row"><label>入院日額</label><input type="range" min="0" max="15000" step="1000" value="5000" id="medDaily" oninput="calc()"><span class="num" id="med-out">5,000円</span></div>
+    <div class="row detail-only"><label>入院日額</label><input type="range" min="0" max="15000" step="1000" value="5000" id="medDaily" oninput="calc()"><span class="num" id="med-out">5,000円</span></div>
   </div>
   <div class="chk-row"><input type="checkbox" id="hasCancer" onchange="calc()"><label for="hasCancer">がん保険に加入している</label></div>
   <div class="chk-row"><input type="checkbox" id="hasIncome" onchange="calc()"><label for="hasIncome">就業不能保険（収入保障）に加入している</label></div>

@@ -311,7 +311,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 <div class="main">
   <div class="section-title">お子さんの情報</div>
   <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc()"><span class="num" id="age-out">0歳</span></div>
-  <div class="row"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
+  <div class="row detail-only"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
 
   <div class="section-title">学校の種別を選択</div>
   <div class="row"><label>幼稚園・保育園</label><select id="kinder" onchange="calc()"><option value="public">公立（認可保育所）</option><option value="private" selected>私立幼稚園</option></select></div>

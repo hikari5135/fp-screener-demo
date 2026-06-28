@@ -440,9 +440,9 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 <div class="row"><label>返済期間</label><input type="range" min="10" max="35" step="1" value="35" id="years" oninput="calc()"><span class="num" id="years-out">35年</span></div>
 <div class="row"><label>年収（手取り）</label><input type="range" min="200" max="1200" step="10" value="400" id="income" oninput="calc()"><span class="num" id="income-out">400万円</span></div>
 <div class="row"><label>金利（変動型）</label><input type="range" min="0.1" max="3" step="0.05" value="0.5" id="rate1" oninput="calc()"><span class="num" id="rate1-out">0.50%</span></div>
-<div class="row"><label>金利（固定型）</label><input type="range" min="0.5" max="4" step="0.05" value="1.8" id="rate2" oninput="calc()"><span class="num" id="rate2-out">1.80%</span></div>
+<div class="row detail-only"><label>金利（固定型）</label><input type="range" min="0.5" max="4" step="0.05" value="1.8" id="rate2" oninput="calc()"><span class="num" id="rate2-out">1.80%</span></div>
 <div class="section-title">繰り上げ返済</div>
-<div class="row"><label>毎年の繰り上げ返済額</label><input type="range" min="0" max="200" step="10" value="0" id="prepay" oninput="calc()"><span class="num" id="prepay-out">0万円</span></div>
+<div class="row detail-only"><label>毎年の繰り上げ返済額</label><input type="range" min="0" max="200" step="10" value="0" id="prepay" oninput="calc()"><span class="num" id="prepay-out">0万円</span></div>
 <div class="section-title">変動 vs 固定 比較</div>
 <div class="compare-grid">
   <div class="compare-card"><div class="compare-title">変動金利型</div>
