@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>保険見直し診断｜FPナビ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--yellow:#f39c12;--yellow-light:#fef9e7;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.header-btns{display:flex;gap:8px}.btn-save{background:rgba(200,169,110,.15);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-pdf{background:var(--gold);border:none;color:var(--navy);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-print{background:var(--white);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px}
+.client-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:28px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.client-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+.client-box input[type=text]{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:160px}
+.client-box select{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif}
+.btn-load{background:var(--navy);color:var(--white);border:none;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--muted);width:200px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--navy)}
+.row select{font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:4px;background:var(--white);color:var(--navy)}
+.row .num{font-size:13px;font-weight:700;color:var(--navy);width:100px;text-align:right;flex-shrink:0}
+.chk-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.chk-row label{font-size:13px;color:var(--text)}
+.chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy)}
+.score-section{background:var(--navy);border-radius:14px;padding:24px 28px;margin:24px 0;color:var(--white)}
+.score-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.score-label{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.15em;margin-bottom:4px}
+.score-num{font-family:"Noto Serif JP",serif;font-size:64px;font-weight:700;color:var(--gold);line-height:1}
+.score-unit{font-size:14px;color:rgba(255,255,255,.5)}
+.score-stars{font-size:20px;color:var(--gold);margin-top:4px}
+.score-rank{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
+.score-rank.s{background:rgba(200,169,110,.25);color:var(--gold)}.score-rank.a{background:rgba(42,122,79,.25);color:#5ec48a}
+.score-rank.b{background:rgba(243,156,18,.2);color:#f39c12}.score-rank.c{background:rgba(192,57,43,.2);color:#e74c3c}
+.score-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;flex:1}
+.score-item{background:rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;text-align:center}
+.score-item-label{font-size:10px;color:rgba(255,255,255,.6);margin-bottom:4px}
+.score-item-val{font-size:18px;font-weight:700;font-family:"Noto Serif JP",serif}
+.score-item-bar{height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:4px;overflow:hidden}
+.score-item-bar-fill{height:100%;border-radius:2px}
+.ai-comment{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:16px 0;position:relative}
+.ai-icon{position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+.ai-name{font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:4px}
+.ai-text{font-size:14px;color:var(--navy);line-height:1.9;font-weight:500}
+.ai-highlight{color:var(--green);font-weight:700}.ai-warn{color:var(--red);font-weight:700}
+.result-item{border-radius:8px;padding:12px 16px;margin-bottom:10px}
+.result-item-ok{background:var(--green-light);border:1px solid #2a7a4f}
+.result-item-warn{background:var(--yellow-light);border:1px solid #f39c12}
+.result-item-ng{background:var(--red-light);border:1px solid #c0392b}
+.result-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.result-desc{font-size:12px;color:var(--muted);line-height:1.7}
+.advice-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+.advice-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.advice-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.advice-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.advice-text{font-size:13px;color:var(--muted);line-height:1.7}
+.advice-text strong{color:var(--navy)}
+.fp-note{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.fp-note label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.fp-note textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:70px}
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media print{header,.header-btns,.client-box,footer,.toast{display:none!important}body{background:#fff}.main{padding:0}.score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 保険見直し診断</div></div>
+  <div class="header-btns">
+    <button class="btn-save" onclick="saveData()">💾 保存</button>
+    <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF出力</button>
+  </div>
+</header>
+<div class="hero">
+  <div class="hero-badge">INSURANCE DIAGNOSIS</div>
+  <h1>保険<em>最適化</em>診断</h1>
+  <p class="hero-sub">現在の保険内容をスコアリングして過不足を診断。FP相談の強力なツール。</p>
+</div>
+<div class="main" id="report-area">
+  <div class="client-box">
+    <div><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+    <div><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年6月28日"></div>
+    <div><label>保存データ</label><select id="savedList" onchange="loadSelected()"><option value="">-- 保存済みを選択 --</option></select><button class="btn-load" onclick="deleteSelected()">削除</button></div>
+  </div>
+  <div class="section-title">基本情報</div>
+  <div class="row"><label>年齢</label><input type="range" min="20" max="65" step="1" value="35" id="age" oninput="calc()"><span class="num" id="age-out">35歳</span></div>
+  <div class="row"><label>家族構成</label><select id="family" onchange="calc()"><option value="single">独身</option><option value="couple">既婚・子なし</option><option value="family" selected>既婚・子あり</option></select></div>
+  <div class="row"><label>年収（手取り）</label><input type="range" min="200" max="1200" step="10" value="400" id="income" oninput="calc()"><span class="num" id="income-out">400万円</span></div>
+  <div class="row"><label>住宅ローン残高</label><input type="range" min="0" max="5000" step="100" value="2000" id="loan" oninput="calc()"><span class="num" id="loan-out">2,000万円</span></div>
+  <div class="section-title">現在加入している保険</div>
+  <div class="chk-row"><input type="checkbox" id="hasLife" onchange="calc()" checked><label for="hasLife">生命保険（死亡保障）に加入している</label></div>
+  <div id="life-detail" style="margin-left:26px">
+    <div class="row"><label>死亡保障額</label><input type="range" min="0" max="5000" step="100" value="1000" id="lifeCover" oninput="calc()"><span class="num" id="life-out">1,000万円</span></div>
+  </div>
+  <div class="chk-row"><input type="checkbox" id="hasMed" onchange="calc()" checked><label for="hasMed">医療保険に加入している</label></div>
+  <div id="med-detail" style="margin-left:26px">
+    <div class="row"><label>入院日額</label><input type="range" min="0" max="15000" step="1000" value="5000" id="medDaily" oninput="calc()"><span class="num" id="med-out">5,000円</span></div>
+  </div>
+  <div class="chk-row"><input type="checkbox" id="hasCancer" onchange="calc()"><label for="hasCancer">がん保険に加入している</label></div>
+  <div class="chk-row"><input type="checkbox" id="hasIncome" onchange="calc()"><label for="hasIncome">就業不能保険（収入保障）に加入している</label></div>
+  <div class="chk-row"><input type="checkbox" id="hasLong" onchange="calc()"><label for="hasLong">介護保険（民間）に加入している</label></div>
+
+  <div class="score-section">
+    <div class="score-header">
+      <div>
+        <div class="score-label">保険カバレッジスコア</div>
+        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
+        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
+        <div class="score-rank" id="score-rank">診断中</div>
+      </div>
+      <div class="score-breakdown" id="score-breakdown"></div>
+    </div>
+  </div>
+  <div class="ai-comment">
+    <div class="ai-icon">🤖 FPナビ AI診断</div>
+    <div class="ai-name">保険アドバイザー</div>
+    <div class="ai-text" id="ai-text">入力データを分析中...</div>
+  </div>
+  <div class="section-title">保障内容の診断結果</div>
+  <div id="result-items"></div>
+  <div class="advice-box">
+    <div class="advice-title">💡 改善アクションプラン</div>
+    <div id="action-items"></div>
+    <div class="fp-note">
+      <label>📝 担当FPメモ</label>
+      <textarea id="fpMemo" placeholder="顧客へのアドバイスや次回確認事項..."></textarea>
+    </div>
+  </div>
+  <div class="disclaimer">【重要】本診断は参考情報の提供を目的とした概算ツールです。保険商品の推奨ではありません。詳細は担当FPにご相談ください。</div>
+</div>
+<footer>FPナビ Life Planning Suite ／ 保険見直し診断 ― 投資助言ではありません © 2026</footer>
+<div class="toast" id="toast"></div>
+<script>
+const SK = "fpnavi_ins_saves";
+function showToast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+function getSaves(){try{return JSON.parse(localStorage.getItem(SK)||"{}");}catch{return{}}}
+function refreshList(){const s=getSaves(),sel=document.getElementById("savedList");sel.innerHTML='<option value="">-- 保存済みを選択 --</option>';Object.keys(s).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)})}
+function saveData(){
+  const name=document.getElementById("clientName").value.trim()||"未入力";
+  const key=name+"_"+new Date().toLocaleDateString("ja-JP");
+  const s=getSaves();
+  s[key]={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value,age:document.getElementById("age").value,family:document.getElementById("family").value,income:document.getElementById("income").value,loan:document.getElementById("loan").value,hasLife:document.getElementById("hasLife").checked,lifeCover:document.getElementById("lifeCover").value,hasMed:document.getElementById("hasMed").checked,medDaily:document.getElementById("medDaily").value,hasCancer:document.getElementById("hasCancer").checked,hasIncome:document.getElementById("hasIncome").checked,hasLong:document.getElementById("hasLong").checked};
+  localStorage.setItem(SK,JSON.stringify(s));refreshList();showToast("✅ 保存しました："+key);
+}
+function loadSelected(){
+  const key=document.getElementById("savedList").value;if(!key)return;
+  const d=getSaves()[key];if(!d)return;
+  document.getElementById("clientName").value=d.clientName||"";
+  document.getElementById("clientDate").value=d.clientDate||"";
+  document.getElementById("fpMemo").value=d.fpMemo||"";
+  document.getElementById("age").value=d.age;document.getElementById("family").value=d.family;
+  document.getElementById("income").value=d.income;document.getElementById("loan").value=d.loan;
+  document.getElementById("hasLife").checked=d.hasLife;document.getElementById("lifeCover").value=d.lifeCover;
+  document.getElementById("hasMed").checked=d.hasMed;document.getElementById("medDaily").value=d.medDaily;
+  document.getElementById("hasCancer").checked=d.hasCancer;document.getElementById("hasIncome").checked=d.hasIncome;
+  document.getElementById("hasLong").checked=d.hasLong;
+  calc();showToast("📂 読み込みました："+key);
+}
+function deleteSelected(){const key=document.getElementById("savedList").value;if(!key)return;if(!confirm(key+" を削除しますか？"))return;const s=getSaves();delete s[key];localStorage.setItem(SK,JSON.stringify(s));refreshList();showToast("🗑️ 削除しました")}
+function exportPDF(){const name=document.getElementById("clientName").value||"保険診断";const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_保険見直し診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("✅ PDF出力完了"))}
+function gc(s){return s>=80?"#2a7a4f":s>=60?"#f39c12":"#c0392b"}
+function calc(){
+  const age=parseInt(document.getElementById("age").value);
+  const family=document.getElementById("family").value;
+  const income=parseInt(document.getElementById("income").value);
+  const loan=parseInt(document.getElementById("loan").value);
+  const hasLife=document.getElementById("hasLife").checked;
+  const lifeCover=parseInt(document.getElementById("lifeCover").value);
+  const hasMed=document.getElementById("hasMed").checked;
+  const medDaily=parseInt(document.getElementById("medDaily").value);
+  const hasCancer=document.getElementById("hasCancer").checked;
+  const hasIncome=document.getElementById("hasIncome").checked;
+  document.getElementById("age-out").textContent=age+"歳";
+  document.getElementById("income-out").textContent=income.toLocaleString()+"万円";
+  document.getElementById("loan-out").textContent=loan.toLocaleString()+"万円";
+  document.getElementById("life-out").textContent=lifeCover.toLocaleString()+"万円";
+  document.getElementById("med-out").textContent=medDaily.toLocaleString()+"円";
+  document.getElementById("life-detail").style.display=hasLife?"block":"none";
+  document.getElementById("med-detail").style.display=hasMed?"block":"none";
+  const needLife=family!=="single";
+  const recLifeCover=loan+(needLife?income*5:0);
+  const items=[],breakdown=[];let score=0;
+  if(needLife){
+    if(!hasLife){items.push({cls:"ng",i:"⚠️",title:"死亡保障が未加入",desc:"家族への保障として、推奨額："+recLifeCover.toLocaleString()+"万円程度の保障が一般的です。"});breakdown.push({icon:"🏦",label:"死亡保障",score:10});}
+    else if(lifeCover<recLifeCover){items.push({cls:"warn",i:"⚠️",title:"死亡保障が不足の可能性",desc:"現在"+lifeCover.toLocaleString()+"万円→推奨"+recLifeCover.toLocaleString()+"万円。差額"+(recLifeCover-lifeCover).toLocaleString()+"万円の増額を検討してください。"});score+=15;breakdown.push({icon:"🏦",label:"死亡保障",score:60});}
+    else{items.push({cls:"ok",i:"✅",title:"死亡保障は充足しています",desc:"現在の保障額（"+lifeCover.toLocaleString()+"万円）は概ね適切な水準です。"});score+=25;breakdown.push({icon:"🏦",label:"死亡保障",score:100});}
+  }else{score+=20;breakdown.push({icon:"🏦",label:"死亡保障",score:80});}
+  if(!hasMed){items.push({cls:"ng",i:"⚠️",title:"医療保険が未加入",desc:"高額療養費でカバーされない差額ベッド代・食事代への備えとして医療保険を検討してください。"});breakdown.push({icon:"🏥",label:"医療保障",score:10});}
+  else if(medDaily<3000){items.push({cls:"warn",i:"⚠️",title:"入院日額がやや低め",desc:"入院日額"+medDaily.toLocaleString()+"円。5,000円以上が一般的な目安です。"});score+=12;breakdown.push({icon:"🏥",label:"医療保障",score:55});}
+  else{items.push({cls:"ok",i:"✅",title:"医療保険は充足しています",desc:"入院日額"+medDaily.toLocaleString()+"円と概ね適切です。"});score+=25;breakdown.push({icon:"🏥",label:"医療保障",score:100});}
+  if(!hasCancer){items.push({cls:"warn",i:"⚠️",title:"がん保険が未加入",desc:"日本人の2人に1人はがんに罹患します。"+(age>=40?"40代以上はリスクが高まります。":"")+"がん特約・がん保険の追加を検討してください。"});breakdown.push({icon:"🎗️",label:"がん保障",score:10});}
+  else{items.push({cls:"ok",i:"✅",title:"がん保険に加入済み",desc:"がんへの備えができています。"});score+=25;breakdown.push({icon:"🎗️",label:"がん保障",score:100});}
+  if(family==="family"&&!hasIncome){items.push({cls:"warn",i:"⚠️",title:"就業不能保険が未加入",desc:"子どもがいる場合、働けなくなった時の収入減少リスクへの備えが重要です。"});breakdown.push({icon:"💼",label:"就業不能",score:20});}
+  else if(hasIncome){items.push({cls:"ok",i:"✅",title:"就業不能保険に加入済み",desc:"働けなくなった場合の備えができています。"});score+=15;breakdown.push({icon:"💼",label:"就業不能",score:100});}
+  else{score+=10;breakdown.push({icon:"💼",label:"就業不能",score:60});}
+  const totalScore=Math.min(100,score);
+  const stars=totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1;
+  const rk=totalScore>=90?{l:"Sランク：最優秀",c:"s"}:totalScore>=75?{l:"Aランク：優秀",c:"a"}:totalScore>=60?{l:"Bランク：標準",c:"b"}:{l:"Cランク：要改善",c:"c"};
+  document.getElementById("total-score").textContent=totalScore;
+  document.getElementById("score-stars").textContent="★".repeat(stars)+"☆".repeat(5-stars);
+  const re=document.getElementById("score-rank");re.textContent=rk.l;re.className="score-rank "+rk.c;
+  document.getElementById("score-breakdown").innerHTML=breakdown.map(it=>'<div class="score-item"><div class="score-item-label">'+it.icon+' '+it.label+'</div><div class="score-item-val" style="color:'+gc(it.score)+'">'+it.score+'</div><div class="score-item-bar"><div class="score-item-bar-fill" style="width:'+it.score+'%;background:'+gc(it.score)+'"></div></div></div>').join("");
+  const nm=document.getElementById("clientName").value?document.getElementById("clientName").value+"の":"";
+  let ai="";
+  if(totalScore>=80)ai='<span class="ai-highlight">'+nm+'保険カバレッジは充実しています。</span>主要なリスクへの備えが整っています。定期的な見直しを続けましょう。';
+  else if(totalScore>=60)ai=nm+'保険に一部改善の余地があります。優先度の高い項目から順番に見直しを進めましょう。';
+  else ai='<span class="ai-warn">'+nm+'保険に重要な不足があります。</span>特に死亡保障・医療保険を優先的に見直してください。';
+  document.getElementById("ai-text").innerHTML=ai;
+  const clsMap={ok:"result-item-ok",warn:"result-item-warn",ng:"result-item-ng"};
+  document.getElementById("result-items").innerHTML=items.map(it=>'<div class="result-item '+clsMap[it.cls]+'"><div class="result-title">'+it.i+' '+it.title+'</div><div class="result-desc">'+it.desc+'</div></div>').join("");
+  const acts=items.filter(i=>i.cls!=="ok").map(i=>({i:i.cls==="ng"?"🚨":"⚠️",t:"<strong>"+i.title+"</strong>："+i.desc}));
+  if(acts.length===0)acts.push({i:"🎉",t:"<strong>保険カバレッジは良好です。</strong>年齢・ライフステージの変化に合わせて定期的に見直しましょう。"});
+  document.getElementById("action-items").innerHTML=acts.map(a=>'<div class="advice-item"><div class="advice-icon">'+a.i+'</div><div class="advice-text">'+a.t+'</div></div>').join("");
+}
+refreshList();calc();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>相続税診断｜FPナビ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--yellow:#f39c12;--yellow-light:#fef9e7;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand{display:flex;flex-direction:column}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px;letter-spacing:.04em}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.header-btns{display:flex;gap:8px;align-items:center}
+.btn-save{background:rgba(200,169,110,.15);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-pdf{background:var(--gold);border:none;color:var(--navy);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-print{background:var(--white);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#243460 100%);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px}
+.client-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:28px;display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+.client-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+.client-box input[type=text]{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:160px}
+.client-box select{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif}
+.btn-load{background:var(--navy);color:var(--white);border:none;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--muted);width:200px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--navy)}
+.row .num{font-size:13px;font-weight:700;color:var(--navy);width:100px;text-align:right;flex-shrink:0}
+.row select{font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:4px;background:var(--white);color:var(--navy)}
+.score-section{background:var(--navy);border-radius:14px;padding:24px 28px;margin:24px 0;color:var(--white)}
+.score-label-sm{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.15em;margin-bottom:4px}
+.score-big{font-family:"Noto Serif JP",serif;font-size:64px;font-weight:700;color:var(--gold);line-height:1}
+.score-unit{font-size:14px;color:rgba(255,255,255,.5)}
+.score-stars{font-size:20px;color:var(--gold);margin-top:4px}
+.score-rank{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
+.rank-s{background:rgba(200,169,110,.25);color:var(--gold)}
+.rank-a{background:rgba(42,122,79,.25);color:#5ec48a}
+.rank-b{background:rgba(243,156,18,.2);color:#f39c12}
+.rank-c{background:rgba(192,57,43,.2);color:#e74c3c}
+.ai-comment{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:20px 0;position:relative}
+.ai-icon{position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.1em}
+.ai-text{font-size:14px;color:var(--navy);line-height:1.9;font-weight:500;margin-top:8px}
+.ai-hl{color:var(--green);font-weight:700}
+.ai-warn{color:var(--red);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px}
+.card-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.card-val{font-size:20px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.card-unit{font-size:11px;color:var(--muted)}
+.card.accent{border-color:var(--navy)}
+.card.good{border-color:var(--green)}.card.good .card-val{color:var(--green)}
+.card.bad{border-color:var(--red)}.card.bad .card-val{color:var(--red)}
+.chart-wrap{position:relative;width:100%;height:260px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;margin:16px 0}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.compare-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px}
+.compare-card.featured{border-color:var(--navy);border-width:2px}
+.compare-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.compare-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
+.compare-label{color:var(--muted)}.compare-val{color:var(--navy);font-weight:700}
+.diff-box{background:var(--green-light);color:var(--green);font-size:13px;font-weight:700;padding:10px 16px;border-radius:6px;margin:14px 0}
+.advice-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+.advice-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.advice-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.advice-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.advice-text{font-size:13px;color:var(--muted);line-height:1.7}
+.advice-text strong{color:var(--navy)}
+.fp-note{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.fp-note label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.fp-note textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:70px}
+.tip-box{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:8px}
+.tip-box strong{color:var(--text)}
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+.badge-ok{display:inline-block;background:var(--green-light);color:var(--green);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.badge-ng{display:inline-block;background:var(--red-light);color:var(--red);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.badge-warn{display:inline-block;background:var(--yellow-light);color:var(--yellow);font-size:12px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:14px}
+.compare-highlight{background:var(--green-light);border:1px solid var(--green);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--green);font-weight:700}
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;background:var(--white);border-radius:8px;overflow:hidden}
+table.data-table th{text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--cream)}
+table.data-table td{padding:10px 14px;color:var(--text);border-bottom:1px solid var(--border)}
+table.data-table tr:last-child td{border-bottom:none;font-weight:700;background:var(--cream)}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media print{header,.header-btns,.client-box,footer,.toast{display:none!important}body{background:#fff}.main{padding:0}.score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE / 相続税診断</div></div>
+  <div class="header-btns">
+    <button class="btn-save" onclick="saveData()">保存</button>
+    <button class="btn-print" onclick="window.print()">印刷</button>
+    <button class="btn-pdf" onclick="doPDF()">PDF出力</button>
+  </div>
+</header>
+<div class="hero">
+  <div class="hero-badge">INHERITANCE TAX</div>
+  <h1>相続税と<em>節税額</em>を診断する</h1>
+  <p class="hero-sub">遺産総額・相続人数を入力するだけで節税ポテンシャルを表示</p>
+</div>
+<div class="main" id="report-area">
+<div class="client-box">
+  <div><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+  <div><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年6月28日"></div>
+  <div><label>保存データ</label><select id="savedList" onchange="loadSelected()"><option value="">-- 保存済みを選択 --</option></select><button class="btn-load" onclick="deleteSelected()">削除</button></div>
+</div>
+
+<div class="score-section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div><div class="score-label-sm">診断スコア</div><div><span class="score-big" id="total-score">0</span><span class="score-unit">点</span></div><div class="score-stars" id="score-stars">☆☆☆☆☆</div><div class="score-rank" id="score-rank">診断中</div></div>
+    <div id="score-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;flex:1;max-width:520px"></div>
+  </div>
+</div><div class="ai-comment"><div class="ai-icon">FPナビ AI診断</div><div class="ai-text" id="ai-text" style="margin-top:12px">分析中...</div></div>
+<div class="section-title">遺産・相続人の情報を入力</div>
+<div class="row"><label>遺産総額（不動産・預貯金等）</label><input type="range" min="0" max="30000" step="500" value="5000" id="estate" oninput="calc()"><span class="num" id="estate-out">5,000万円</span></div>
+<div class="row"><label>法定相続人の数（配偶者含む）</label><input type="range" min="1" max="8" step="1" value="3" id="heirs" oninput="calc()"><span class="num" id="heirs-out">3人</span></div>
+<div class="row"><label>うち配偶者の有無</label><select id="spouse" onchange="calc()"><option value="yes">あり</option><option value="no">なし</option></select></div>
+<div class="row"><label>死亡保険金（みなし相続財産）</label><input type="range" min="0" max="5000" step="100" value="0" id="insurance" oninput="calc()"><span class="num" id="insurance-out">0万円</span></div>
+<div class="row"><label>債務・葬儀費用</label><input type="range" min="0" max="3000" step="100" value="200" id="debt" oninput="calc()"><span class="num" id="debt-out">200万円</span></div>
+<div class="section-title">試算結果</div>
+<div id="status-badge"></div>
+<div class="cards">
+  <div class="card"><div class="card-label">基礎控除額</div><div class="card-val" id="deduction"></div><div class="card-unit">万円</div></div>
+  <div class="card"><div class="card-label">課税遺産総額</div><div class="card-val" id="taxable"></div><div class="card-unit">万円</div></div>
+  <div class="card bad"><div class="card-label">相続税の総額（概算）</div><div class="card-val" id="total-tax"></div><div class="card-unit">万円</div></div>
+  <div class="card good"><div class="card-label">節税ポテンシャル</div><div class="card-val" id="saving-potential"></div><div class="card-unit">万円（目安）</div></div>
+</div>
+<div class="section-title">節税シミュレーション</div>
+<div class="compare-grid">
+  <div class="compare-card bad"><div class="compare-title">現状のまま</div><div class="compare-row"><span class="compare-label">相続税額</span><span class="compare-val" id="tax-now"></span></div></div>
+  <div class="compare-card good"><div class="compare-title">節税対策後（目安）</div><div class="compare-row"><span class="compare-label">相続税額（目安）</span><span class="compare-val" id="tax-after"></span></div><div class="compare-row"><span class="compare-label">節税額（目安）</span><span class="compare-val" id="tax-diff"></span></div></div>
+</div>
+<div class="section-title">各相続人の税額</div>
+<table class="data-table"><thead><tr><th>相続人</th><th>法定相続分</th><th>取得金額</th><th>相続税額</th></tr></thead><tbody id="heir-table"></tbody></table>
+<div class="section-title">節税対策の詳細</div>
+<div id="tips-detail"></div>
+
+<div class="advice-box">
+  <div class="advice-title">改善アクションプラン</div>
+  <div id="action-items"></div>
+  <div class="fp-note"><label>担当FPメモ（PDF印刷に反映）</label><textarea id="fpMemo" placeholder="顧客へのアドバイスや次回確認事項..."></textarea></div>
+</div>
+<div class="disclaimer">本診断は相続税法の基本的な計算方法に基づく概算です。実際の申告には専門家（税理士・FP）へのご相談をおすすめします。</div>
+</div>
+<footer>FPナビ Life Planning Suite / 相続税診断 - 投資助言ではありません 2026</footer>
+<div class="toast" id="toast"></div>
+<script>
+
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+function getSaves(key){try{return JSON.parse(localStorage.getItem(key)||"{}");}catch{return{}}}
+function refreshList(key){const saves=getSaves(key),sel=document.getElementById("savedList");sel.innerHTML='<option value="">-- 保存済みを選択 --</option>';Object.keys(saves).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)})}
+function getScoreColor(s){return s>=80?"#2a7a4f":s>=60?"#f39c12":"#c0392b"}
+function getRankInfo(s){if(s>=90)return{label:"Sランク：最優秀",cls:"rank-s"};if(s>=75)return{label:"Aランク：優秀",cls:"rank-a"};if(s>=60)return{label:"Bランク：標準",cls:"rank-b"};return{label:"Cランク：要改善",cls:"rank-c"}}
+function setScore(elId,starsId,rankId,sc){document.getElementById(elId).textContent=sc;const st="★".repeat(sc>=90?5:sc>=75?4:sc>=60?3:sc>=45?2:1)+"☆".repeat(5-(sc>=90?5:sc>=75?4:sc>=60?3:sc>=45?2:1));document.getElementById(starsId).textContent=st;const ri=getRankInfo(sc);const re=document.getElementById(rankId);re.textContent=ri.label;re.className="score-rank "+ri.cls}
+function setBreakdown(elId,items){document.getElementById(elId).innerHTML=items.map(it=>'<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;text-align:center"><div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px">'+it.label+'</div><div style="font-size:20px;font-weight:700;font-family:\'Noto Serif JP\',serif;color:'+getScoreColor(it.score)+'">'+it.score+'</div><div style="height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;border-radius:2px;background:'+getScoreColor(it.score)+';width:'+it.score+'%"></div></div></div>').join("")}
+function exportPDF(name,suffix){const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_"+suffix+"_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("PDF出力完了"))}
+function commonSave(SK,fields){const name=document.getElementById("clientName").value.trim()||"未入力";const key=name+"_"+new Date().toLocaleDateString("ja-JP");const saves=getSaves(SK);const data={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value};fields.forEach(id=>data[id]=document.getElementById(id).value);saves[key]=data;localStorage.setItem(SK,JSON.stringify(saves));refreshList(SK);showToast("保存しました："+key)}
+function commonLoad(SK,fields){const key=document.getElementById("savedList").value;if(!key)return;const d=getSaves(SK)[key];if(!d)return;["clientName","clientDate","fpMemo"].forEach(id=>{if(d[id]!==undefined)document.getElementById(id).value=d[id]});fields.forEach(id=>{if(d[id]!==undefined)document.getElementById(id).value=d[id]});calc();showToast("読み込みました："+key)}
+function commonDelete(SK){const key=document.getElementById("savedList").value;if(!key)return;if(!confirm(key+" を削除しますか？"))return;const saves=getSaves(SK);delete saves[key];localStorage.setItem(SK,JSON.stringify(saves));refreshList(SK);showToast("削除しました")}
+
+
+const SK04="fpnavi_inh";
+const BRACKETS=[{limit:1000,rate:.10,ded:0},{limit:3000,rate:.15,ded:50},{limit:5000,rate:.20,ded:200},{limit:10000,rate:.30,ded:700},{limit:20000,rate:.40,ded:1700},{limit:30000,rate:.45,ded:2700},{limit:60000,rate:.50,ded:4200},{limit:Infinity,rate:.55,ded:7200}];
+function taxOn(a){for(const b of BRACKETS){if(a<=b.limit)return Math.max(0,Math.round(a*b.rate-b.ded));}return 0;}
+function saveData(){commonSave(SK04,["estate","heirs","insurance","debt"])}
+function loadSelected(){commonLoad(SK04,["estate","heirs","insurance","debt"])}
+function deleteSelected(){commonDelete(SK04)}
+function doPDF(){exportPDF(document.getElementById("clientName").value||"相続税診断","相続税診断")}
+function calc(){
+  const estate=parseInt(document.getElementById("estate").value);
+  const heirs=parseInt(document.getElementById("heirs").value);
+  const spouse=document.getElementById("spouse").value==="yes";
+  const insurance=parseInt(document.getElementById("insurance").value);
+  const debt=parseInt(document.getElementById("debt").value);
+  document.getElementById("estate-out").textContent=estate.toLocaleString()+"万円";
+  document.getElementById("heirs-out").textContent=heirs+"人";
+  document.getElementById("insurance-out").textContent=insurance.toLocaleString()+"万円";
+  document.getElementById("debt-out").textContent=debt.toLocaleString()+"万円";
+  const insNT=Math.min(insurance,500*heirs);
+  const total=estate+Math.max(0,insurance-insNT)-debt;
+  const ded=3000+600*heirs;
+  const taxable=Math.max(0,total-ded);
+  document.getElementById("deduction").textContent=ded.toLocaleString();
+  document.getElementById("taxable").textContent=taxable.toLocaleString();
+  const children=spouse?heirs-1:heirs;
+  const spShare=spouse?0.5:0;
+  const chShare=children>0?(1-spShare)/children:0;
+  let totalTax=0;
+  if(spouse)totalTax+=taxOn(taxable*spShare);
+  for(let i=0;i<children;i++)totalTax+=taxOn(taxable*chShare);
+  document.getElementById("total-tax").textContent=totalTax.toLocaleString();
+  const giftPot=Math.min(totalTax*0.3,110*heirs*5);
+  const insPot=Math.max(0,(500*heirs-insurance)*0.2);
+  const totalSaving=Math.round((giftPot+insPot)*0.8);
+  const taxAfter=Math.max(0,totalTax-totalSaving);
+  document.getElementById("saving-potential").textContent=totalSaving.toLocaleString();
+  document.getElementById("tax-now").textContent=totalTax.toLocaleString()+"万円";
+  document.getElementById("tax-after").textContent=taxAfter.toLocaleString()+"万円";
+  document.getElementById("tax-diff").textContent=totalSaving.toLocaleString()+"万円";
+  const insUsagePct=insurance/(500*heirs)*100;
+  let sc=taxable===0?100:Math.min(95,Math.round(insUsagePct*0.35+(spouse?25:0)+Math.min(25,100-totalTax/Math.max(1,total)*200)+15));
+  sc=Math.max(10,sc);
+  setScore("total-score","score-stars","score-rank",sc);
+  setBreakdown("score-breakdown",[{label:"保険非課税枠",score:Math.min(100,Math.round(insUsagePct))},{label:"配偶者控除",score:spouse?90:20},{label:"税負担率",score:Math.min(100,taxable===0?100:Math.round(100-totalTax/Math.max(1,total)*200))},{label:"生前対策",score:30}]);
+  const badge=taxable===0?"badge-ok":totalTax<500?"badge-warn":"badge-ng";
+  const badgeText=taxable===0?"基礎控除内：相続税はかかりません":totalTax<500?"少額の相続税が発生します":"相続税が発生します";
+  document.getElementById("status-badge").innerHTML='<div class="'+badge+'">'+badgeText+'</div>';
+  const cn=document.getElementById("clientName").value?document.getElementById("clientName").value+"の":"";
+  let ai=taxable===0?cn+"遺産は基礎控除内のため、相続税はかかりません。":cn+"相続税の概算は"+totalTax.toLocaleString()+"万円です。";
+  if(totalSaving>0)ai+="適切な節税対策で約"+totalSaving.toLocaleString()+"万円の節税が見込めます。";
+  if(insurance<500*heirs)ai+="生命保険の非課税枠をあと"+(500*heirs-insurance).toLocaleString()+"万円活用できます。";
+  document.getElementById("ai-text").innerHTML=ai;
+  const rows=[];
+  if(spouse){const amt=Math.round(total*spShare);const tax=taxOn(taxable*spShare);rows.push("<tr><td>配偶者</td><td>1/2</td><td>"+amt.toLocaleString()+"万円</td><td>"+tax.toLocaleString()+"万円（配偶者控除で大幅軽減の可能性）</td></tr>")}
+  for(let i=0;i<children;i++){const amt=Math.round(total*chShare);const tax=taxOn(taxable*chShare);rows.push("<tr><td>子"+(children>1?" "+(i+1):"")+"（"+children+"人均等）</td><td>"+(chShare*100).toFixed(1)+"%</td><td>"+amt.toLocaleString()+"万円</td><td>"+tax.toLocaleString()+"万円</td></tr>")}
+  document.getElementById("heir-table").innerHTML=rows.join("")+"<tr class='total-row'><td>合計</td><td>-</td><td>"+total.toLocaleString()+"万円</td><td>"+totalTax.toLocaleString()+"万円</td></tr>";
+  const tips=[];
+  if(insurance<500*heirs){const room=500*heirs-insurance;const sv=Math.round(room*0.2);tips.push('<div class="tip-box"><strong>生命保険の非課税枠活用</strong>：あと'+room.toLocaleString()+'万円の非課税枠があり、活用で約'+sv.toLocaleString()+'万円の節税が見込めます。</div>')}
+  if(taxable>0)tips.push('<div class="tip-box"><strong>暦年贈与</strong>：年間110万円までの贈与は非課税です。相続人'+heirs+'人に毎年贈与すると年間'+110*heirs+'万円の課税遺産を圧縮できます。</div>');
+  if(spouse)tips.push('<div class="tip-box"><strong>配偶者の税額軽減</strong>：配偶者が相続した財産のうち、1億6,000万円または法定相続分のいずれか多い金額までは相続税がかかりません。</div>');
+  tips.push('<div class="tip-box"><strong>小規模宅地等の特例</strong>：自宅の土地は要件を満たせば評価額を最大80%減額できます。詳細は税理士にご相談ください。</div>');
+  document.getElementById("tips-detail").innerHTML=tips.join("");
+  const actions=[];
+  if(insurance<500*heirs)actions.push({icon:"★",text:"<strong>生命保険の増額</strong>：非課税枠をあと"+(500*heirs-insurance).toLocaleString()+"万円活用できます。"});
+  if(taxable>0)actions.push({icon:"★",text:"<strong>生前贈与の計画</strong>：計画的な贈与で相続財産を合法的に圧縮できます。"});
+  if(taxable>1000)actions.push({icon:"★",text:"<strong>遺言書の作成</strong>：配偶者控除等を最大活用するため、遺言書の作成をご検討ください。"});
+  document.getElementById("action-items").innerHTML=actions.map(a=>'<div class="advice-item"><div class="advice-icon">'+a.icon+'</div><div class="advice-text">'+a.text+'</div></div>').join("");
+}
+refreshList(SK04);calc();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FPナビ｜Life Planning Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 40px;display:flex;align-items:center;height:64px}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:20px;letter-spacing:.05em}
+.brand-sub{color:rgba(255,255,255,.5);font-size:11px;letter-spacing:.15em;margin-left:16px;padding-left:16px;border-left:1px solid rgba(255,255,255,.2)}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:64px 40px 56px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.25em;padding:5px 16px;border-radius:20px;margin-bottom:18px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:36px;line-height:1.4;margin-bottom:14px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.7);font-size:15px;max-width:560px;margin:0 auto}
+.main{max-width:960px;margin:0 auto;padding:56px 32px 80px}
+.tools-title{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:24px;border-left:3px solid var(--gold);padding-left:12px}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-bottom:48px}
+.tool-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:24px;text-decoration:none;color:var(--text);display:block;transition:all .2s}
+.tool-card:hover{box-shadow:0 8px 32px rgba(26,39,68,.12);transform:translateY(-2px);border-color:var(--gold)}
+.tool-num{font-size:10px;color:var(--muted);letter-spacing:.15em;margin-bottom:8px}
+.tool-icon{font-size:28px;margin-bottom:10px}
+.tool-name{font-family:"Noto Serif JP",serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.tool-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px}
+.tool-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:10px;background:var(--cream);color:var(--muted);padding:3px 8px;border-radius:12px}
+.tag.hot{background:rgba(200,169,110,.15);color:#9a7030;font-weight:700}
+.cta-section{background:var(--navy);border-radius:14px;padding:36px 40px;text-align:center;color:var(--white)}
+.cta-title{font-family:"Noto Serif JP",serif;font-size:22px;color:var(--gold);margin-bottom:10px}
+.cta-desc{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:20px}
+.cta-btn{display:inline-block;background:var(--gold);color:var(--navy);font-weight:700;font-size:14px;padding:12px 32px;border-radius:6px;text-decoration:none;font-family:"Noto Sans JP",sans-serif}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:18px}
+@media(max-width:640px){.hero h1{font-size:26px}.tools-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand-name">FPナビ</div>
+  <div class="brand-sub">LIFE PLANNING SUITE</div>
+</header>
+<div class="hero">
+  <div class="hero-badge">FP CONSULTING TOOLKIT</div>
+  <h1>FP相談を、<em>もっと伝わる</em>ものに。</h1>
+  <p class="hero-sub">8つの診断ツールで、お客様の財務状況を100点満点でスコアリング。面談後にそのままPDF・印刷でお土産として渡せます。</p>
+</div>
+<div class="main">
+  <div class="tools-title">TOOL LIST ／ 診断ツール一覧</div>
+  <div class="tools-grid">
+    <a class="tool-card" href="fpnavi_01_lifeplan.html">
+      <div class="tool-num">TOOL 01</div>
+      <div class="tool-icon">📊</div>
+      <div class="tool-name">ライフプラン診断</div>
+      <div class="tool-desc">老後資金・資産推移をスコアリング。65歳時の推定資産と不足額をグラフで見える化。</div>
+      <div class="tool-tags"><span class="tag hot">🔥 人気No.1</span><span class="tag">スコア診断</span><span class="tag">PDF出力</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_02_insurance.html">
+      <div class="tool-num">TOOL 02</div>
+      <div class="tool-icon">🛡️</div>
+      <div class="tool-name">保険見直し診断</div>
+      <div class="tool-desc">死亡保障・医療・がん・就業不能の過不足をスコアリング。保障額の目安も自動計算。</div>
+      <div class="tool-tags"><span class="tag">スコア診断</span><span class="tag">PDF出力</span><span class="tag">データ保存</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_03_mortgage.html">
+      <div class="tool-num">TOOL 03</div>
+      <div class="tool-icon">🏠</div>
+      <div class="tool-name">住宅ローン比較診断</div>
+      <div class="tool-desc">変動vs固定・繰り上げ返済効果をリアルタイム試算。スコア・AIコメント付き。</div>
+      <div class="tool-tags"><span class="tag hot">🔥 相談頻度高</span><span class="tag">比較分析</span><span class="tag">PDF出力</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_04_inheritance.html">
+      <div class="tool-num">TOOL 04</div>
+      <div class="tool-icon">📜</div>
+      <div class="tool-name">相続税診断</div>
+      <div class="tool-desc">基礎控除・課税額・各相続人の税額を自動計算。節税ポイントと具体的な節税額も表示。</div>
+      <div class="tool-tags"><span class="tag">節税試算</span><span class="tag">PDF出力</span><span class="tag">データ保存</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_household.html">
+      <div class="tool-num">TOOL 05</div>
+      <div class="tool-icon">💰</div>
+      <div class="tool-name">家計健全度診断</div>
+      <div class="tool-desc">100点満点スコア＋レーダーチャート＋AIコメント。家計改善のアクションプランも自動生成。</div>
+      <div class="tool-tags"><span class="tag hot">🔥 診断力No.1</span><span class="tag">レーダーチャート</span><span class="tag">PDF出力</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_06_education.html">
+      <div class="tool-num">TOOL 06</div>
+      <div class="tool-icon">🎓</div>
+      <div class="tool-name">教育費シミュレーター</div>
+      <div class="tool-desc">幼稚園〜大学まで公立/私立の選択で総額を試算。毎月の積立目安額も自動計算。</div>
+      <div class="tool-tags"><span class="tag">子育て世代向け</span><span class="tag">積立試算</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_07_retirement.html">
+      <div class="tool-num">TOOL 07</div>
+      <div class="tool-icon">🏦</div>
+      <div class="tool-name">老後資金診断</div>
+      <div class="tool-desc">公的年金との差額・不足額を計算。「毎月〇万円積立すれば解消」の具体的な解決策を提示。</div>
+      <div class="tool-tags"><span class="tag">不足額計算</span><span class="tag">解決策提示</span></div>
+    </a>
+    <a class="tool-card" href="fpnavi_08_nisa.html">
+      <div class="tool-num">TOOL 08</div>
+      <div class="tool-icon">📈</div>
+      <div class="tool-name">NISA試算診断</div>
+      <div class="tool-desc">積立額を増やしたら老後にいくら増えるか比較表示。非課税メリットも円グラフで見える化。</div>
+      <div class="tool-tags"><span class="tag hot">🔥 新NISA対応</span><span class="tag">比較表示</span><span class="tag">PDF出力</span></div>
+    </a>
+  </div>
+  <div class="cta-section">
+    <div class="cta-title">FPナビ は FP相談キット です</div>
+    <div class="cta-desc">8つのツールで面談前〜面談後まで一貫してサポート。PDF出力でそのまま顧客へのお土産に。</div>
+    <a class="cta-btn" href="fpnavi_01_lifeplan.html">まずライフプラン診断を試す →</a>
+  </div>
+</div>
+<footer>FPナビ Life Planning Suite ― 投資助言ではありません © 2026</footer>
+</body>
+</html>
