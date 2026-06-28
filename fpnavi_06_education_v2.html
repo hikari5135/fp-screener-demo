@@ -5,236 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>教育費シミュレーター｜FPナビ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
-
-
-
-
-
-
-
-
-
-  if (el) el.addEventListener('input', updateCTA);
-});
-
-
-  // AI・クロージング更新
-  const aiEl = document.getElementById('ai-text');
-  if (aiEl) {
-    const prefix = getAITonePrefix ? getAITonePrefix() : '';
-    const childAge2 = parseInt(document.getElementById('age').value);
-    const remaining2 = parseInt(document.getElementById('remaining').textContent.replace(/,/g,'')) || 0;
-    const yearsLeft = Math.max(1, 18 - childAge2);
-    const monthly = Math.round(remaining2 / yearsLeft / 12);
-    aiEl.innerHTML = prefix + (remaining2 > 2000
-      ? '<span style="color:var(--red);font-weight:700">教育費の準備が急務です。</span>今から月' + monthly.toLocaleString() + '万円の積立が必要です。'
-      : remaining2 > 0
-      ? '今から月<strong>' + monthly.toLocaleString() + '万円</strong>の積立で大学卒業まで準備できます。'
-      : '<span style="color:var(--green);font-weight:700">教育費の準備は概ね良好です。</span>');
-    // 学資 vs NISA比較
-    const rate_gak = 0.5, rate_nisa = 5;
-    let gak = 0, nis = 0;
-    for(let i=0;i<yearsLeft*12;i++){gak=gak*(1+rate_gak/100/12)+monthly;nis=nis*(1+rate_nisa/100/12)+monthly;}
-    document.getElementById('edu-gakushi').innerHTML = '返戻率105〜110%程度<br>月' + monthly.toLocaleString() + '万円×' + yearsLeft + '年<br>→約<strong>' + Math.round(gak).toLocaleString() + '万円</strong><br>元本保証・確実な準備';
-    document.getElementById('edu-nisa').innerHTML = '想定利回り5%の場合<br>月' + monthly.toLocaleString() + '万円×' + yearsLeft + '年<br>→約<strong>' + Math.round(nis).toLocaleString() + '万円</strong><br>非課税・高リターン期待';
-    // クロージング
-    const cb = document.getElementById('closing-box');
-    const ci = document.getElementById('closing-items');
-    if (cb && ci) {
-      cb.style.display = 'block';
-      ci.innerHTML = '<div class="closing-item">学資保険とNISAの比較提案が刺さるタイミングです。リスク許容度を確認しましょう。</div><div class="closing-item">児童手当（月1〜1.5万円）を積立に回すプランを提案すると具体的で響きます。</div>';
-    }
-  }
-
-
-
-// ===== FPナビ 共有データハブ =====
-const FP_SHARED_KEY = 'fpnavi_shared_v2';
-
-const FPShared = {
-  // データ保存
-  save: function(data) {
-    const existing = FPShared.load();
-    const merged = Object.assign({}, existing, data);
-    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
-  },
-  // データ読込
-  load: function() {
-    try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); }
-    catch(e) { return {}; }
-  },
-  // 共有バナー表示
-  showBanner: function(fields) {
-    const d = FPShared.load();
-    const matched = fields.filter(f => d[f]);
-    if (matched.length === 0) return;
-    const labels = {
-      clientName:'顧客名', age:'年齢', income:'年収',
-      expense:'年間支出', savings:'貯蓄額', family:'家族構成',
-      children:'子ども人数', monthlyIncome:'月収入'
-    };
-    const items = matched.map(f => (labels[f]||f) + '：' + d[f]).join('　／　');
-    const banner = document.getElementById('shared-banner');
-    if (banner) {
-      banner.style.display = 'block';
-      banner.innerHTML = '📂 <strong>前回のデータを引き継ぎました</strong>　' + items +
-        '　<button onclick="FPShared.applyAll();if(typeof calc==='function')calc();" style="margin-left:12px;background:var(--gold);border:none;color:var(--navy);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">反映する</button>' +
-        '　<button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer">×</button>';
-    }
-  },
-  // フォームに値を適用（各ツールで上書き）
-  applyAll: function() {
-    const d = FPShared.load();
-    const apply = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val !== undefined && val !== '') {
-        el.value = val;
-        // change/inputイベントを発火
-        el.dispatchEvent(new Event('input'));
-        el.dispatchEvent(new Event('change'));
-      }
-    };
-    // 共通フィールド
-    if (d.clientName) apply('clientName', d.clientName);
-    if (d.age)        apply('age', d.age);
-    if (d.income)     apply('income', d.income);
-    if (d.expense)    apply('expense', d.expense);
-    if (d.savings)    apply('savings', d.savings);
-    if (d.family)     apply('family', d.family);
-    if (d.monthlyIncome) apply('income', d.monthlyIncome); // 家計→他ツール
-  }
-};
-// ===== 共有データハブ ここまで =====
-
-
-// ===== スコア表示ユーティリティ =====
-function renderUnifiedScore(containerId, totalScore, breakdownItems) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const stars = '★'.repeat(totalScore>=90?5:totalScore>=75?4:totalScore>=60?3:totalScore>=45?2:1) +
-                '☆'.repeat(totalScore>=90?0:totalScore>=75?1:totalScore>=60?2:totalScore>=45?3:4);
-  const rankMap = {90:{l:'Sランク：最優秀',c:'s'},75:{l:'Aランク：優秀',c:'a'},60:{l:'Bランク：標準',c:'b'},0:{l:'Cランク：要改善',c:'c'}};
-  let rk = rankMap[0];
-  for (const threshold of [90,75,60,0]) { if (totalScore >= threshold) { rk = rankMap[threshold]; break; } }
-  const gc = s => s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b';
-  const breakdownHtml = breakdownItems.map(it =>
-    `<div class="score-breakdown-item">
-      <div class="score-breakdown-label">${it.icon} ${it.label}</div>
-      <div class="score-breakdown-val" style="color:${gc(it.score)}">${it.score}</div>
-      <div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:${it.score}%;background:${gc(it.score)}"></div></div>
-    </div>`
-  ).join('');
-  container.innerHTML = `
-    <div class="unified-score-header">
-      <div class="unified-score-main">
-        <div class="score-label">${container.dataset.label || 'スコア'}</div>
-        <div><span class="score-num">${totalScore}</span><span class="score-unit">点</span></div>
-        <div class="score-stars">${stars}</div>
-        <div class="score-rank ${rk.c}">${rk.l}</div>
-      </div>
-      <div class="score-breakdown-grid">${breakdownHtml}</div>
-    </div>`;
-}
-// ===== スコア表示ユーティリティ ここまで =====
-
-// PDF出力前にヘッダー・フッターを更新
-function updatePDFMeta() {
-  const name = document.getElementById('clientName')?.value || '';
-  const date = document.getElementById('clientDate')?.value || '';
-  const office = document.getElementById('fpOfficeName')?.value || '';
-  const fp = document.getElementById('fpFPName')?.value || '';
-  const contact = document.getElementById('fpContact')?.value || '';
-  const today = new Date().toLocaleDateString('ja-JP');
-  const cn = document.getElementById('pdf-client-name');
-  const cd = document.getElementById('pdf-client-date');
-  const pd = document.getElementById('pdf-today');
-  const pf = document.getElementById('pdf-fp-info');
-  if (cn) cn.textContent = name || '　';
-  if (cd) cd.textContent = date || '　';
-  if (pd) pd.textContent = today;
-  if (pf) {
-    const fpInfo = [fp, office, contact].filter(Boolean).join('　');
-    pf.textContent = fpInfo ? '担当FP：' + fpInfo : '';
-  }
-}
-
-// exportPDF関数を上書きして品質向上版に
-function exportPDF() {
-  updatePDFMeta();
-  const name = document.getElementById('clientName')?.value || 'FPナビ診断';
-  const toolName = document.title.replace('｜FPナビ', '');
-  const el = document.getElementById('report-area');
-  const opt = {
-    margin: [10, 10, 12, 10],
-    filename: name + '_' + toolName + '_FPナビ.pdf',
-    image: { type: 'jpeg', quality: 0.97 },
-    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#f8f5ef', logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  };
-  showToast('📄 PDF生成中...');
-  if (typeof html2pdf !== 'undefined') {
-    html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
-  } else {
-    window.print();
-  }
-}
-
-
-// ===== FPナビ共通機能 =====
-function setMode(mode, btn) {
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.detail-only').forEach(el => {
-    el.style.display = mode === 'detail' ? '' : 'none';
-  });
-  if (typeof calc === 'function') calc();
-}
-function toggleAIEdit() {
-  const editor = document.getElementById('ai-editor');
-  const text = document.getElementById('ai-text');
-  if (!editor || !text) return;
-  if (!editor.style.display || editor.style.display === 'none') {
-    editor.value = text.innerText || text.textContent;
-    editor.style.display = 'block';
-    text.style.display = 'none';
-  } else {
-    text.innerHTML = editor.value;
-    editor.style.display = 'none';
-    text.style.display = 'block';
-  }
-}
-function updateCTA() {
-  const office = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
-  const fp     = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
-  const ctaMsg = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
-  const contact= document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
-  const box    = document.getElementById('cta-box');
-  const textEl = document.getElementById('cta-text');
-  if (!box || !textEl) return;
-  if (office || fp || ctaMsg) {
-    box.style.display = 'block';
-    const lines = [];
-    if (ctaMsg) lines.push(ctaMsg);
-    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
-    if (contact) lines.push(contact);
-    textEl.style.whiteSpace = 'pre-line';
-    textEl.textContent = lines.join('\n');
-  } else { box.style.display = 'none'; }
-}
-function getAITonePrefix() {
-  const el = document.getElementById('aiTone');
-  const tone = el ? el.value : 'normal';
-  return ({mild:'ご安心ください。', push:'率直にお伝えします。', normal:''})[tone] || '';
-}
-['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', updateCTA);
-});
-// ===== ここまで共通機能 =====
-
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root { --navy:#1a2744; --gold:#c8a96e; --cream:#f8f5ef; --white:#ffffff; --text:#1a2744; --muted:#6b7a99; --green:#2a7a4f; --green-light:#e8f5ee; --red:#c0392b; --red-light:#fdf0ee; --yellow:#f39c12; --yellow-light:#fef9e7; --border:#e2ddd5; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -274,29 +45,187 @@ tr:last-child td { border-bottom:none; font-weight:700; background:var(--cream);
 .disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
 footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
 
-/* PDF/印刷最適化 */
-@media print {
-  header, .header-btns, .client-box, .fp-settings,
-  .mode-switch, footer, .toast, .shared-banner,
-  .closing-box, .ai-edit-btn, .ai-editor { display: none !important; }
-  body { background: #fff !important; font-size: 12px; }
-  .main { padding: 0 !important; max-width: 100% !important; }
-  .pdf-header { display: flex !important; }
+/* ===== FPナビ v2 追加スタイル ===== */
+.fp-settings{background:linear-gradient(135deg,#f8f5ef,#fff);border:2px solid var(--gold);border-radius:12px;padding:20px 24px;margin-bottom:24px}
+.fp-settings-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.fp-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fp-field{display:flex;flex-direction:column;gap:4px}
+.fp-field label{font-size:11px;color:var(--muted);font-weight:500}
+.fp-field input,.fp-field select{border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;width:100%}
+.mode-switch{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.mode-btn{flex:1;padding:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;font-family:"Noto Sans JP",sans-serif;color:var(--muted)}
+.mode-btn.active{background:var(--navy);color:var(--white)}
+.detail-only{display:none}
+.ai-edit-btn{font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;float:right}
+.ai-editor{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:70px;margin-top:8px;display:none}
+.cta-box{background:var(--navy);border-radius:10px;padding:18px 22px;margin-top:20px;color:var(--white)}
+.cta-box-title{font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px}
+.cta-box-text{font-size:14px;font-weight:500;line-height:1.8}
+.shared-banner{background:#e8f5ee;border:1px solid #2a7a4f;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#1a2744;display:none;line-height:1.8}
+.next-action-box{background:linear-gradient(135deg,#1a2744,#243460);border-radius:14px;padding:22px 26px;margin:20px 0;color:#fff}
+.next-action-title{font-size:11px;color:#c8a96e;letter-spacing:.15em;margin-bottom:14px}
+.next-action-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.next-action-item{background:rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;cursor:pointer;text-decoration:none;display:block}
+.next-action-item:hover{background:rgba(200,169,110,.2)}
+.next-action-item-icon{font-size:18px;margin-bottom:4px}
+.next-action-item-title{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
+.next-action-item-desc{font-size:11px;color:rgba(255,255,255,.6);line-height:1.6}
+.next-action-item-badge{display:inline-block;background:#c8a96e;color:#1a2744;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:5px}
+/* PDF印刷 */
+.pdf-header{display:none;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:2px solid #1a2744;margin-bottom:18px}
+.pdf-header-brand{font-family:"Noto Serif JP",serif;font-size:17px;color:#1a2744}
+.pdf-header-brand span{font-size:10px;color:#6b7a99;display:block}
+.pdf-header-client{text-align:right;font-size:12px}
+.pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
+@media print{
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  body{background:#fff!important}
+  .main{padding:0!important}
+  .pdf-header{display:flex!important}
+  .score-section{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
-.pdf-header {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0 12px;
-  border-bottom: 2px solid #1a2744;
-  margin-bottom: 20px;
-}
-.pdf-header-brand { font-family: "Noto Serif JP", serif; font-size: 18px; color: #1a2744; }
-.pdf-header-brand span { font-size: 11px; color: #6b7a99; display: block; }
-.pdf-header-client { text-align: right; font-size: 12px; }
-.pdf-header-client strong { font-size: 16px; color: #1a2744; display: block; }
-
+/* ===== ここまで ===== */
 </style>
+<script>
+
+// ===== FPナビ v2 追加機能 =====
+var FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+function fpSharedSave(data) {
+  try {
+    var existing = fpSharedLoad();
+    var merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  } catch(e) {}
+}
+
+function fpSharedLoad() {
+  try { return JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function fpSharedShowBanner(fields) {
+  var d = fpSharedLoad();
+  var labels = {clientName:"顧客名",age:"年齢",income:"年収",expense:"年間支出",savings:"貯蓄額",family:"家族構成"};
+  var matched = fields.filter(function(f){ return d[f]; });
+  if (matched.length === 0) return;
+  var items = matched.map(function(f){ return (labels[f]||f) + "：" + d[f]; }).join("　／　");
+  var banner = document.getElementById("shared-banner");
+  if (!banner) return;
+  banner.style.display = "block";
+  var btn1 = document.createElement("button");
+  btn1.textContent = "反映する";
+  btn1.style.cssText = "margin-left:10px;background:#c8a96e;border:none;color:#1a2744;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer";
+  btn1.onclick = function() { fpSharedApply(); if(typeof calc !== "undefined") calc(); };
+  var btn2 = document.createElement("button");
+  btn2.textContent = "×";
+  btn2.style.cssText = "margin-left:6px;background:none;border:none;color:#6b7a99;font-size:11px;cursor:pointer";
+  btn2.onclick = function() { banner.style.display = "none"; };
+  banner.innerHTML = "<strong>📂 前回のデータを引き継ぎました</strong>　" + items + "　";
+  banner.appendChild(btn1);
+  banner.appendChild(btn2);
+}
+
+function fpSharedApply() {
+  var d = fpSharedLoad();
+  function applyVal(id, val) {
+    var el = document.getElementById(id);
+    if (el && val !== undefined && val !== '') {
+      el.value = val;
+      el.dispatchEvent(new Event('input'));
+      el.dispatchEvent(new Event('change'));
+    }
+  }
+  if (d.clientName) applyVal('clientName', d.clientName);
+  if (d.age)        applyVal('age', d.age);
+  if (d.income)     applyVal('income', d.income);
+  if (d.expense)    applyVal('expense', d.expense);
+  if (d.savings)    applyVal('savings', d.savings);
+  if (d.family)     applyVal('family', d.family);
+}
+
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-only').forEach(function(el) {
+    el.style.display = mode === 'detail' ? '' : 'none';
+  });
+  if (typeof calc === 'function') calc();
+}
+
+function toggleAIEdit() {
+  var editor = document.getElementById('ai-editor');
+  var text = document.getElementById('ai-text');
+  if (!editor || !text) return;
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText || text.textContent || '';
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+
+function updateFPCTA() {
+  var office  = document.getElementById('fpOfficeName') ? document.getElementById('fpOfficeName').value : '';
+  var fp      = document.getElementById('fpFPName')     ? document.getElementById('fpFPName').value     : '';
+  var ctaMsg  = document.getElementById('fpCTA')        ? document.getElementById('fpCTA').value        : '';
+  var contact = document.getElementById('fpContact')    ? document.getElementById('fpContact').value    : '';
+  var box     = document.getElementById('cta-box');
+  var textEl  = document.getElementById('cta-text');
+  if (!box || !textEl) return;
+  if (office || fp || ctaMsg) {
+    box.style.display = 'block';
+    var lines = [];
+    if (ctaMsg) lines.push(ctaMsg);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    if (contact) lines.push(contact);
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function getAITonePrefix() {
+  var el = document.getElementById('aiTone');
+  var tone = el ? el.value : 'normal';
+  var map = {mild:'ご安心ください。', push:'率直にお伝えします。', normal:''};
+  return map[tone] || '';
+}
+
+function exportPDF() {
+  var name = document.getElementById('clientName') ? document.getElementById('clientName').value : 'FPナビ診断';
+  var cn = document.getElementById('pdf-client-name');
+  var cd = document.getElementById('pdf-client-date');
+  var date = document.getElementById('clientDate') ? document.getElementById('clientDate').value : '';
+  if (cn) cn.textContent = name || '　';
+  if (cd) cd.textContent = date || '　';
+  var el = document.getElementById('report-area');
+  if (typeof html2pdf === 'undefined') { window.print(); return; }
+  var opt = {
+    margin:[10,10,12,10],
+    filename: (name||'診断') + '_FPナビ.pdf',
+    image:{type:'jpeg',quality:0.95},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:'#f8f5ef'},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  };
+  if (typeof showToast === 'function') showToast('📄 PDF生成中...');
+  html2pdf().set(opt).from(el).save().then(function() {
+    if (typeof showToast === 'function') showToast('✅ PDF出力完了');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  ['fpOfficeName','fpFPName','fpContact','fpCTA'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateFPCTA);
+  });
+});
+// ===== ここまで =====
+
+</script>
 </head>
 <body>
 <header>
@@ -320,17 +249,6 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
   <div class="row"><label>高等学校</label><select id="high" onchange="calc()"><option value="public" selected>公立高校</option><option value="private">私立高校</option></select></div>
   <div class="row"><label>大学</label><select id="univ" onchange="calc()"><option value="public">国公立大学</option><option value="private_lit" selected>私立大学（文系）</option><option value="private_sci">私立大学（理系）</option><option value="private_med">私立大学（医歯薬系）</option></select></div>
 
-
-  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:20px 24px;margin:16px 0;position:relative">
-    <div style="position:absolute;top:-12px;left:20px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">🤖 FPナビ AI診断</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:4px">
-      教育費アドバイザー
-      <button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button>
-    </div>
-    <div class="ai-text" id="ai-text" style="font-size:14px;color:var(--navy);line-height:1.9;font-weight:500">入力データを分析中...</div>
-    <textarea class="ai-editor" id="ai-editor" placeholder="AIコメントをここで編集できます..."></textarea>
-  </div>
-  <div class="shared-banner" id="shared-banner"></div>
   <div class="section-title">試算結果</div>
   <div id="badge-area"></div>
   <div class="cards">
@@ -357,42 +275,9 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
     <div class="cta-box-text" id="cta-text"></div>
   </div>
 
-  <div class="closing-box" id="closing-box" style="display:none">
-    <div class="closing-title">💼 FP向け：次の提案ステップ（顧客には非表示）</div>
-    <div id="closing-items"></div>
-  </div>
-
-  <div style="background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:18px 22px;margin:16px 0">
-    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px">📊 準備方法の比較：学資保険 vs NISA（つみたて投資枠）</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">🛡️ 学資保険</div>
-        <div id="edu-gakushi" style="font-size:13px;color:var(--navy);line-height:1.7">計算中...</div>
-      </div>
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📈 NISA（つみたて投資枠）</div>
-        <div id="edu-nisa" style="font-size:13px;color:var(--navy);line-height:1.7">計算中...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 次のアクション（マネタイズ導線） -->
   <div class="next-action-box">
     <div class="next-action-title">🔗 次のステップ ／ 関連診断ツール</div>
-    <div class="next-action-items">
-        <div class="next-action-item" onclick="window.location.href='fpnavi_household_v2.html'">
-          <div class="next-action-item-icon">📊</div>
-          <div class="next-action-item-title">家計全体のバランスを確認</div>
-          <div class="next-action-item-desc">教育費を含めた家計の健全度を診断</div>
-          <div class="next-action-item-badge">家計診断へ</div>
-        </div>
-        <div class="next-action-item" onclick="window.location.href='fpnavi_08_nisa_v2.html'">
-          <div class="next-action-item-icon">📈</div>
-          <div class="next-action-item-title">NISAで教育費を準備</div>
-          <div class="next-action-item-desc">非課税で効率よく教育費を積立</div>
-          <div class="next-action-item-badge">NISA試算へ</div>
-        </div>
-    </div>
+    <div class="next-action-items"><a class="next-action-item" href="fpnavi_household_v2.html"><div class="next-action-item-icon">📊</div><div class="next-action-item-title">家計全体のバランスを確認</div><div class="next-action-item-desc">教育費を含めた家計の健全度を診断</div><div class="next-action-item-badge">家計診断へ</div></a><a class="next-action-item" href="fpnavi_08_nisa_v2.html"><div class="next-action-item-icon">📈</div><div class="next-action-item-title">NISAで教育費を準備</div><div class="next-action-item-desc">非課税で効率よく教育費を積立</div><div class="next-action-item-badge">NISA試算へ</div></a></div>
   </div>
   <div class="disclaimer">※教育費の目安は文部科学省「子供の学習費調査」等の公開データをもとにした概算です。実際の費用は地域・学校・習い事等により大きく異なります。詳細はFP等の専門家にご相談ください。</div>
 </div>
@@ -489,6 +374,9 @@ function calc() {
 }
 
 calc();
+</script>
+<script>
+fpSharedShowBanner(["family"]);
 </script>
 </body>
 </html>
