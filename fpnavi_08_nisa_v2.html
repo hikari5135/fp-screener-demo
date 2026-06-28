@@ -286,6 +286,29 @@ header { background:var(--navy); padding:0 32px; display:flex; align-items:cente
 .disclaimer { font-size:11px; color:var(--muted); line-height:1.8; margin-top:24px; padding:16px; background:var(--white); border-radius:8px; border:1px solid var(--border); }
 footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; text-align:center; padding:16px; }
 @media(max-width:600px){ .nisa-grid { grid-template-columns:1fr; } .compare-grid { grid-template-columns:1fr; } }
+
+/* PDF/印刷最適化 */
+@media print {
+  header, .header-btns, .client-box, .fp-settings,
+  .mode-switch, footer, .toast, .shared-banner,
+  .closing-box, .ai-edit-btn, .ai-editor { display: none !important; }
+  body { background: #fff !important; font-size: 12px; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .pdf-header { display: flex !important; }
+}
+.pdf-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 2px solid #1a2744;
+  margin-bottom: 20px;
+}
+.pdf-header-brand { font-family: "Noto Serif JP", serif; font-size: 18px; color: #1a2744; }
+.pdf-header-brand span { font-size: 11px; color: #6b7a99; display: block; }
+.pdf-header-client { text-align: right; font-size: 12px; }
+.pdf-header-client strong { font-size: 16px; color: #1a2744; display: block; }
+
 </style>
 </head>
 <body>

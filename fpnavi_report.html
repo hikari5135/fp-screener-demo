@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FP総合レポート｜FPナビ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--yellow:#f39c12;--yellow-light:#fef9e7;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.header-btns{display:flex;gap:8px}
+.btn-pdf{background:var(--gold);border:none;color:var(--navy);padding:8px 18px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-print{background:var(--white);border:1px solid var(--border);color:var(--text);padding:8px 18px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-reset{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:8px 18px;border-radius:4px;font-size:13px;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+
+.main{max-width:900px;margin:0 auto;padding:36px 24px 80px}
+
+/* FP・顧客情報 */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.info-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px}
+.info-box-title{font-size:11px;color:var(--muted);letter-spacing:.15em;margin-bottom:12px;font-weight:500}
+.info-field{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.info-field label{font-size:11px;color:var(--muted)}
+.info-field input{border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;font-family:"Noto Sans JP",sans-serif}
+
+/* 総合スコア */
+.total-score-section{background:var(--navy);border-radius:16px;padding:32px 36px;margin:24px 0;color:var(--white);position:relative;overflow:hidden}
+.total-score-section::before{content:"";position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(200,169,110,.08)}
+.total-score-section::after{content:"";position:absolute;bottom:-60px;left:-20px;width:160px;height:160px;border-radius:50%;background:rgba(200,169,110,.05)}
+.total-score-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;position:relative;z-index:1}
+.total-score-left .label{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.2em;margin-bottom:8px}
+.total-score-left .big-score{font-family:"Noto Serif JP",serif;font-size:88px;font-weight:700;color:var(--gold);line-height:1}
+.total-score-left .unit{font-size:18px;color:rgba(255,255,255,.4)}
+.total-score-left .stars{font-size:22px;color:var(--gold);margin:6px 0}
+.total-score-left .rank-badge{display:inline-block;font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;margin-top:4px}
+.rank-s{background:rgba(200,169,110,.3);color:var(--gold)}
+.rank-a{background:rgba(42,122,79,.3);color:#5ec48a}
+.rank-b{background:rgba(243,156,18,.25);color:#f39c12}
+.rank-c{background:rgba(192,57,43,.25);color:#e74c3c}
+.total-score-right{flex:1;min-width:280px}
+
+/* 8項目スコアグリッド */
+.scores-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:24px 0}
+.score-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.score-card:hover{box-shadow:0 4px 16px rgba(26,39,68,.12);transform:translateY(-2px)}
+.score-card.active{border-color:var(--gold);box-shadow:0 4px 16px rgba(200,169,110,.3)}
+.score-card-icon{font-size:20px;margin-bottom:6px}
+.score-card-name{font-size:11px;color:var(--muted);margin-bottom:6px}
+.score-card-num{font-family:"Noto Serif JP",serif;font-size:28px;font-weight:700}
+.score-card-unit{font-size:10px;color:var(--muted)}
+.score-card-bar{height:4px;background:var(--cream);border-radius:2px;margin-top:8px;overflow:hidden}
+.score-card-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.score-card-input{display:flex;align-items:center;gap:6px;margin-top:8px}
+.score-card-input label{font-size:10px;color:var(--muted);white-space:nowrap}
+.score-card-input input{width:60px;border:1px solid var(--border);border-radius:3px;padding:3px 6px;font-size:12px;font-family:"Noto Serif JP",sans-serif;text-align:center}
+.score-card-input span{font-size:10px;color:var(--muted)}
+.score-not-set{font-size:11px;color:var(--muted);font-style:italic}
+
+/* レーダーチャート */
+.chart-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.chart-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px}
+.chart-box-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.chart-wrap{position:relative;height:240px}
+
+/* AI総合コメント */
+.ai-total{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:12px;padding:22px 26px;margin:20px 0;position:relative}
+.ai-total-icon{position:absolute;top:-13px;left:22px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px}
+.ai-total-name{font-size:11px;color:var(--muted);margin-bottom:8px;margin-top:6px}
+.ai-total-text{font-size:14px;color:var(--navy);line-height:2;font-weight:500}
+.ai-highlight{color:var(--green);font-weight:700}
+.ai-warn{color:var(--red);font-weight:700}
+.ai-edit-btn{font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;float:right}
+.ai-editor{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px;margin-top:8px;display:none}
+
+/* 優先アクションプラン */
+.action-section{margin:20px 0}
+.action-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.action-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:4px solid}
+.action-card.priority-1{border-left-color:var(--red)}
+.action-card.priority-2{border-left-color:var(--yellow)}
+.action-card.priority-3{border-left-color:var(--green)}
+.action-priority{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px}
+.p1{background:var(--red-light);color:var(--red)}
+.p2{background:var(--yellow-light);color:var(--yellow)}
+.p3{background:var(--green-light);color:var(--green)}
+.action-card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.action-card-desc{font-size:12px;color:var(--muted);line-height:1.7}
+
+/* 面談メモ */
+.memo-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:20px 0}
+.memo-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.memo-box textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px}
+
+/* CTA */
+.cta-final{background:var(--navy);border-radius:12px;padding:20px 24px;margin:20px 0;color:var(--white)}
+.cta-final-title{font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px}
+.cta-final-text{font-size:14px;font-weight:500;line-height:1.8}
+
+/* 次回面談履歴 */
+.history-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:20px 0}
+.history-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.history-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.history-item{text-align:center;padding:10px;background:var(--cream);border-radius:8px}
+.history-date{font-size:10px;color:var(--muted);margin-bottom:4px}
+.history-score{font-size:22px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.history-arrow{font-size:18px;color:var(--green);margin:4px 0}
+
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:14px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+
+/* PDF印刷最適化 */
+@media print{
+  header,.header-btns,footer,.toast,.info-field input,.score-card-input,.memo-box textarea,.ai-edit-btn,.ai-editor,.btn-pdf,.btn-print,.btn-reset{display:none!important}
+  body{background:#fff;font-size:11px}
+  .main{padding:0;max-width:100%}
+  .total-score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .scores-grid{grid-template-columns:repeat(4,1fr)}
+  .chart-section{grid-template-columns:1fr 1fr}
+  .action-grid{grid-template-columns:1fr 1fr 1fr}
+  .pdf-header{display:flex!important}
+  .score-card{break-inside:avoid}
+}
+.pdf-header{display:none;align-items:center;justify-content:space-between;padding:16px 0 14px;border-bottom:2px solid var(--navy);margin-bottom:24px}
+.pdf-header-brand{font-family:"Noto Serif JP",serif;font-size:20px;color:var(--navy)}
+.pdf-header-brand span{font-size:11px;color:var(--muted);font-family:"Noto Sans JP",sans-serif;display:block}
+.pdf-header-client{text-align:right;font-size:12px}
+.pdf-header-client strong{font-size:17px;color:var(--navy);display:block}
+
+@media(max-width:640px){
+  .scores-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-section{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr}
+  .action-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ FP総合レポート</div></div>
+  <div class="header-btns">
+    <button class="btn-reset" onclick="resetAll()">🔄 リセット</button>
+    <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF出力</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">COMPREHENSIVE FP REPORT</div>
+  <h1>FP<em>総合</em>レポート</h1>
+  <p class="hero-sub">8つの診断スコアを集約。面談後そのままお渡しできる総合診断書。</p>
+</div>
+
+<div class="main" id="report-area">
+
+  <!-- PDF用ヘッダー -->
+  <div class="pdf-header">
+    <div class="pdf-header-brand">FPナビ <span>LIFE PLANNING SUITE ／ FP総合レポート</span></div>
+    <div class="pdf-header-client"><strong id="pdf-name">　</strong><span id="pdf-date">　</span></div>
+  </div>
+
+  <!-- FP・顧客情報入力 -->
+  <div class="info-grid">
+    <div class="info-box">
+      <div class="info-box-title">👤 顧客情報</div>
+      <div class="info-field"><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様" oninput="updateMeta()"></div>
+      <div class="info-field"><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年6月28日" oninput="updateMeta()"></div>
+      <div class="info-field"><label>年齢・家族構成</label><input type="text" id="clientProfile" placeholder="例：45歳・既婚・子2人"></div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">⚙️ FP事務所情報</div>
+      <div class="info-field"><label>事務所名・屋号</label><input type="text" id="fpOffice" placeholder="例：ひかりFP相談室" oninput="updateCTA()"></div>
+      <div class="info-field"><label>担当FP名</label><input type="text" id="fpName" placeholder="例：阪本 光 FP" oninput="updateCTA()"></div>
+      <div class="info-field"><label>連絡先・次回誘導文</label><input type="text" id="fpContact" placeholder="例：次回面談でプランを作成します" oninput="updateCTA()"></div>
+    </div>
+  </div>
+
+  <!-- 総合スコア -->
+  <div class="total-score-section">
+    <div class="total-score-header">
+      <div class="total-score-left">
+        <div class="label">FP総合スコア</div>
+        <div><span class="big-score" id="total-score">--</span><span class="unit">点</span></div>
+        <div class="stars" id="total-stars">☆☆☆☆☆</div>
+        <div class="rank-badge rank-b" id="total-rank">スコアを入力してください</div>
+      </div>
+      <div class="total-score-right">
+        <canvas id="radarChart" style="max-height:220px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8項目スコア入力 -->
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.1em">📊 各ツールのスコアを入力してください（0〜100）</div>
+  <div class="scores-grid" id="scores-grid"></div>
+
+  <!-- AI総合コメント -->
+  <div class="ai-total">
+    <div class="ai-total-icon">🤖 FPナビ AI総合診断</div>
+    <div class="ai-total-name">
+      FP総合アドバイザー
+      <button class="ai-edit-btn" onclick="toggleEdit()">✏️ 編集</button>
+    </div>
+    <div class="ai-total-text" id="ai-text">スコアを入力すると総合診断コメントが生成されます。</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="コメントをここで編集できます..."></textarea>
+  </div>
+
+  <!-- グラフ -->
+  <div class="chart-section">
+    <div class="chart-box">
+      <div class="chart-box-title">📊 スコア分布（レーダーチャート）</div>
+      <div class="chart-wrap"><canvas id="radarChart2"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title">📈 項目別スコア（バーチャート）</div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 優先アクションプラン -->
+  <div class="action-section">
+    <div class="action-title">💡 優先アクションプラン</div>
+    <div class="action-grid" id="action-grid"></div>
+  </div>
+
+  <!-- 面談メモ -->
+  <div class="memo-box">
+    <div class="memo-title">📝 担当FPメモ・次回確認事項</div>
+    <textarea id="fpMemo" placeholder="次回面談までの宿題・確認事項・顧客の反応など..."></textarea>
+  </div>
+
+  <!-- 面談履歴 -->
+  <div class="history-box" id="history-box" style="display:none">
+    <div class="history-title">📅 面談履歴・スコア推移</div>
+    <div class="history-grid" id="history-grid"></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-final" id="cta-final" style="display:none">
+    <div class="cta-final-title">📞 次のステップ</div>
+    <div class="cta-final-text" id="cta-text"></div>
+  </div>
+
+  <div class="disclaimer">【重要】本レポートは参考情報の提供を目的とした概算診断書です。FPナビは投資助言業の登録を受けたものではありません。各診断結果は個別の状況により異なります。詳細は担当FPにご相談ください。</div>
+</div>
+
+<footer>FPナビ Life Planning Suite ／ FP総合レポート ― 投資助言ではありません © 2026</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'fpnavi_report_v2';
+const FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+const TOOLS = [
+  {id:'lifeplan', icon:'📊', name:'ライフプラン', short:'老後資金が足りるか3分で分かる', weight:20,
+   actions:{low:'老後資金が大幅に不足しています。iDeCo・NISAの積立を今すぐ開始しましょう。', mid:'老後資金にやや不安があります。積立額の増額を検討しましょう。', high:'老後資金の準備は順調です。運用効率のさらなる改善を検討できます。'}},
+  {id:'insurance', icon:'🛡️', name:'保険見直し', short:'年間○万円の削減余地が分かる', weight:15,
+   actions:{low:'保障に重大な不足があります。死亡・医療保障の見直しを最優先で行いましょう。', mid:'一部の保障に改善余地があります。FPと保障内容を精査しましょう。', high:'保障バランスは良好です。定期的な見直しを継続しましょう。'}},
+  {id:'mortgage', icon:'🏠', name:'住宅ローン', short:'返済総額をいくら減らせるか分かる', weight:15,
+   actions:{low:'住宅ローンの返済負担が重い状態です。借り換え・繰り上げ返済を検討しましょう。', mid:'返済は管理できていますが、繰り上げ返済で利息を削減できます。', high:'住宅ローンの状況は良好です。繰り上げ返済でさらに節約できます。'}},
+  {id:'inheritance', icon:'📜', name:'相続税対策', short:'相続税をいくら節税できるか分かる', weight:10,
+   actions:{low:'相続税が多額に発生する見込みです。生前贈与・保険活用を早急に検討しましょう。', mid:'相続税の節税余地があります。暦年贈与・保険の活用を検討しましょう。', high:'相続対策は概ね整っています。定期的な見直しを続けましょう。'}},
+  {id:'household', icon:'💰', name:'家計健全度', short:'家計の黒字・赤字が一目で分かる', weight:20,
+   actions:{low:'家計が赤字または低貯蓄率の状態です。固定費の見直しを最優先に行いましょう。', mid:'家計はほぼ良好ですが、貯蓄率を高める余地があります。', high:'家計は健全です。余剰資金をNISA等で運用しましょう。'}},
+  {id:'education', icon:'🎓', name:'教育費準備', short:'大学までの総費用と積立額が分かる', weight:5,
+   actions:{low:'教育費の準備が大幅に不足しています。学資保険・NISAを活用しましょう。', mid:'教育費の準備を加速させる必要があります。積立額を増やしましょう。', high:'教育費の準備は順調です。このペースを維持しましょう。'}},
+  {id:'retirement', icon:'🏦', name:'老後資金', short:'毎月いくら積立すれば足りるか分かる', weight:10,
+   actions:{low:'老後資金が大幅に不足する見込みです。iDeCoとNISAの両方を今すぐ始めましょう。', mid:'老後資金に不安があります。積立額の増額とiDeCoの活用を検討しましょう。', high:'老後資金の準備は概ね充足しています。'}},
+  {id:'nisa', icon:'📈', name:'NISA活用', short:'積立を増やすと老後がどう変わるか分かる', weight:5,
+   actions:{low:'NISAをまだ活用できていません。つみたて投資枠から始めましょう。', mid:'NISA活用の余地があります。積立額の増額を検討しましょう。', high:'NISAを有効活用できています。成長投資枠との組み合わせも検討しましょう。'}},
+];
+
+let scores = {};
+let radarChart, radarChart2, barChart;
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2800)}
+
+function gc(s){return s>=80?'#2a7a4f':s>=60?'#f39c12':'#c0392b'}
+
+function initGrid() {
+  const grid = document.getElementById('scores-grid');
+  grid.innerHTML = TOOLS.map(t => {
+    const s = scores[t.id] !== undefined ? scores[t.id] : null;
+    const color = s !== null ? gc(s) : '#ccc';
+    const fillW = s !== null ? s : 0;
+    return `<div class="score-card" id="card-${t.id}" onclick="focusInput('${t.id}')">
+      <div class="score-card-icon">${t.icon}</div>
+      <div class="score-card-name">${t.name}</div>
+      <div class="score-card-num" id="num-${t.id}" style="color:${color}">${s !== null ? s : '--'}</div>
+      <div class="score-card-unit">点</div>
+      <div class="score-card-bar"><div class="score-card-bar-fill" id="bar-${t.id}" style="width:${fillW}%;background:${color}"></div></div>
+      <div class="score-card-input">
+        <input type="number" id="input-${t.id}" min="0" max="100" value="${s !== null ? s : ''}" placeholder="0-100"
+          oninput="setScore('${t.id}',this.value)" style="width:64px">
+        <span>点</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function focusInput(id) {
+  document.getElementById('input-' + id)?.focus();
+}
+
+function setScore(id, val) {
+  const v = Math.max(0, Math.min(100, parseInt(val) || 0));
+  scores[id] = val === '' ? null : v;
+  updateAll();
+}
+
+function updateAll() {
+  // 各カードを更新
+  TOOLS.forEach(t => {
+    const s = scores[t.id];
+    const color = s !== null && s !== undefined ? gc(s) : '#ccc';
+    const numEl = document.getElementById('num-' + t.id);
+    const barEl = document.getElementById('bar-' + t.id);
+    if (numEl) numEl.textContent = s !== null && s !== undefined ? s : '--';
+    if (numEl) numEl.style.color = color;
+    if (barEl) { barEl.style.width = (s || 0) + '%'; barEl.style.background = color; }
+  });
+
+  // 総合スコア計算
+  const validScores = TOOLS.filter(t => scores[t.id] !== null && scores[t.id] !== undefined);
+  if (validScores.length === 0) {
+    document.getElementById('total-score').textContent = '--';
+    document.getElementById('total-stars').textContent = '☆☆☆☆☆';
+    document.getElementById('total-rank').textContent = 'スコアを入力してください';
+    return;
+  }
+  const totalWeight = validScores.reduce((s, t) => s + t.weight, 0);
+  const weighted = validScores.reduce((s, t) => s + scores[t.id] * t.weight, 0);
+  const total = Math.round(weighted / totalWeight);
+
+  document.getElementById('total-score').textContent = total;
+  const stars = total>=90?5:total>=75?4:total>=60?3:total>=45?2:1;
+  document.getElementById('total-stars').textContent = '★'.repeat(stars) + '☆'.repeat(5-stars);
+  const rankEl = document.getElementById('total-rank');
+  if (total>=90){rankEl.textContent='Sランク：最優秀';rankEl.className='rank-badge rank-s';}
+  else if(total>=75){rankEl.textContent='Aランク：優秀';rankEl.className='rank-badge rank-a';}
+  else if(total>=60){rankEl.textContent='Bランク：標準';rankEl.className='rank-badge rank-b';}
+  else{rankEl.textContent='Cランク：要改善';rankEl.className='rank-badge rank-c';}
+
+  // AIコメント生成
+  const weakTools = TOOLS.filter(t => scores[t.id] !== null && scores[t.id] !== undefined && scores[t.id] < 60)
+    .sort((a,b) => scores[a.id] - scores[b.id]);
+  const strongTools = TOOLS.filter(t => scores[t.id] !== null && scores[t.id] !== undefined && scores[t.id] >= 80);
+  const name = document.getElementById('clientName').value || 'お客様';
+  let ai = '';
+  if (total >= 90) {
+    ai = `<span class="ai-highlight">${name}の財務状況は非常に優秀です。</span>全体的に高いスコアを維持しており、資産形成・リスク管理ともに充実しています。`;
+  } else if (total >= 75) {
+    ai = `${name}の総合スコアは<span class="ai-highlight">${total}点（Aランク）</span>と良好です。`;
+    if (weakTools.length > 0) ai += `特に<span class="ai-warn">${weakTools.map(t=>t.name).join('・')}</span>の改善で、さらに総合スコアを高められます。`;
+  } else if (total >= 60) {
+    ai = `${name}の総合スコアは${total}点（Bランク）です。`;
+    if (weakTools.length > 0) ai += `<span class="ai-warn">${weakTools[0].name}（${scores[weakTools[0].id]}点）</span>が最も改善が必要な分野です。`;
+    if (strongTools.length > 0) ai += `一方、<span class="ai-highlight">${strongTools.map(t=>t.name).join('・')}</span>は良好です。`;
+  } else {
+    ai = `<span class="ai-warn">${name}の財務状況に重大な課題があります。</span>`;
+    if (weakTools.length > 0) ai += `特に${weakTools.slice(0,2).map(t=>t.name+'（'+scores[t.id]+'点）').join('・')}を優先的に改善する必要があります。`;
+  }
+  document.getElementById('ai-text').innerHTML = ai;
+
+  // アクションプラン
+  const allActions = TOOLS
+    .filter(t => scores[t.id] !== null && scores[t.id] !== undefined)
+    .map(t => {
+      const s = scores[t.id];
+      const level = s < 60 ? 'low' : s < 80 ? 'mid' : 'high';
+      const priority = s < 60 ? 1 : s < 80 ? 2 : 3;
+      return { tool: t, priority, level, score: s };
+    })
+    .sort((a,b) => a.score - b.score)
+    .slice(0, 6);
+
+  const priorityLabel = {1:{cls:'p1',text:'最優先'},2:{cls:'p2',text:'推奨'},3:{cls:'p3',text:'維持'}};
+  const priorityCard = {1:'priority-1',2:'priority-2',3:'priority-3'};
+  document.getElementById('action-grid').innerHTML = allActions.map(a => `
+    <div class="action-card ${priorityCard[a.priority]}">
+      <div class="action-priority ${priorityLabel[a.priority].cls}">${priorityLabel[a.priority].text} ${a.tool.icon} ${a.tool.name} ${a.score}点</div>
+      <div class="action-card-title">${a.tool.short}</div>
+      <div class="action-card-desc">${a.tool.actions[a.level]}</div>
+    </div>`).join('');
+
+  // チャート更新
+  updateCharts(total);
+
+  // PDF用メタ情報更新
+  updateMeta();
+
+  // LocalStorageに自動保存
+  autoSave();
+}
+
+function updateCharts(total) {
+  const labels = TOOLS.map(t => t.name);
+  const data = TOOLS.map(t => scores[t.id] !== null && scores[t.id] !== undefined ? scores[t.id] : 0);
+  const colors = data.map(v => gc(v));
+
+  // レーダー（ヘッダー内）
+  const ctx1 = document.getElementById('radarChart').getContext('2d');
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(ctx1, {
+    type:'radar',
+    data:{labels, datasets:[{label:'スコア',data,backgroundColor:'rgba(200,169,110,.2)',borderColor:'#c8a96e',borderWidth:2,pointBackgroundColor:'#c8a96e',pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},pointLabels:{font:{size:10},color:'rgba(255,255,255,.8)'},grid:{color:'rgba(255,255,255,.1)'},angleLines:{color:'rgba(255,255,255,.1)'}}},plugins:{legend:{display:false}}}
+  });
+
+  // レーダー2（チャートセクション）
+  const ctx2 = document.getElementById('radarChart2').getContext('2d');
+  if (radarChart2) radarChart2.destroy();
+  radarChart2 = new Chart(ctx2, {
+    type:'radar',
+    data:{labels, datasets:[{label:'スコア',data,backgroundColor:'rgba(26,39,68,.1)',borderColor:'#1a2744',borderWidth:2,pointBackgroundColor:'#c8a96e',pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false,stepSize:20},pointLabels:{font:{size:11},color:'#1a2744'},grid:{color:'#e2ddd5'},angleLines:{color:'#e2ddd5'}}},plugins:{legend:{display:false}}}
+  });
+
+  // バーチャート
+  const ctx3 = document.getElementById('barChart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(ctx3, {
+    type:'bar',
+    data:{labels:TOOLS.map(t=>t.icon+' '+t.name), datasets:[{data,backgroundColor:colors,borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'点'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'点',color:'#6b7a99',font:{size:10}},grid:{color:'#e2ddd5'}},y:{ticks:{color:'#1a2744',font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+function updateMeta() {
+  const name = document.getElementById('clientName').value;
+  const date = document.getElementById('clientDate').value;
+  const pn = document.getElementById('pdf-name');
+  const pd = document.getElementById('pdf-date');
+  if (pn) pn.textContent = name || '　';
+  if (pd) pd.textContent = date || '　';
+}
+
+function updateCTA() {
+  const office = document.getElementById('fpOffice').value;
+  const fp = document.getElementById('fpName').value;
+  const contact = document.getElementById('fpContact').value;
+  const box = document.getElementById('cta-final');
+  const textEl = document.getElementById('cta-text');
+  if (office || fp || contact) {
+    box.style.display = 'block';
+    const lines = [];
+    if (contact) lines.push(contact);
+    if (fp || office) lines.push('担当：' + [fp, office].filter(Boolean).join('　'));
+    textEl.style.whiteSpace = 'pre-line';
+    textEl.textContent = lines.join('\n');
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function toggleEdit() {
+  const editor = document.getElementById('ai-editor');
+  const text = document.getElementById('ai-text');
+  if (!editor.style.display || editor.style.display === 'none') {
+    editor.value = text.innerText;
+    editor.style.display = 'block';
+    text.style.display = 'none';
+  } else {
+    text.innerHTML = editor.value;
+    editor.style.display = 'none';
+    text.style.display = 'block';
+  }
+}
+
+function autoSave() {
+  const data = {
+    scores,
+    clientName: document.getElementById('clientName').value,
+    clientDate: document.getElementById('clientDate').value,
+    clientProfile: document.getElementById('clientProfile').value,
+    fpOffice: document.getElementById('fpOffice').value,
+    fpName: document.getElementById('fpName').value,
+    fpContact: document.getElementById('fpContact').value,
+    fpMemo: document.getElementById('fpMemo').value,
+    savedAt: new Date().toISOString(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // 履歴に追加
+  const total = document.getElementById('total-score').textContent;
+  if (total !== '--') {
+    const histKey = 'fpnavi_report_history';
+    const hist = JSON.parse(localStorage.getItem(histKey) || '[]');
+    const date = document.getElementById('clientDate').value || new Date().toLocaleDateString('ja-JP');
+    const last = hist[hist.length-1];
+    if (!last || last.date !== date) {
+      hist.push({ date, score: parseInt(total) });
+      if (hist.length > 5) hist.shift();
+      localStorage.setItem(histKey, JSON.stringify(hist));
+    }
+    updateHistory();
+  }
+}
+
+function updateHistory() {
+  const hist = JSON.parse(localStorage.getItem('fpnavi_report_history') || '[]');
+  if (hist.length < 2) return;
+  const box = document.getElementById('history-box');
+  const grid = document.getElementById('history-grid');
+  box.style.display = 'block';
+  grid.innerHTML = hist.map((h, i) => {
+    const prev = hist[i-1];
+    const arrow = prev ? (h.score > prev.score ? '↑ +' + (h.score-prev.score) : h.score < prev.score ? '↓ ' + (h.score-prev.score) : '→ 変化なし') : '';
+    return `<div class="history-item">
+      <div class="history-date">${h.date}</div>
+      <div class="history-score" style="color:${gc(h.score)}">${h.score}</div>
+      <div style="font-size:10px;color:var(--muted)">点</div>
+      ${arrow ? '<div class="history-arrow" style="color:' + (arrow.includes('↑')?'var(--green)':'var(--red)') + ';font-size:11px">' + arrow + '</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function resetAll() {
+  if (!confirm('スコアをリセットしますか？')) return;
+  scores = {};
+  initGrid();
+  document.getElementById('total-score').textContent = '--';
+  document.getElementById('total-stars').textContent = '☆☆☆☆☆';
+  document.getElementById('total-rank').textContent = 'スコアを入力してください';
+  document.getElementById('ai-text').textContent = 'スコアを入力すると総合診断コメントが生成されます。';
+  document.getElementById('action-grid').innerHTML = '';
+  showToast('🔄 リセットしました');
+}
+
+function exportPDF() {
+  const name = document.getElementById('clientName').value || 'FP総合レポート';
+  const el = document.getElementById('report-area');
+  const opt = {
+    margin:[8,8,10,8],
+    filename: name + '_FP総合レポート_FPナビ.pdf',
+    image:{type:'jpeg',quality:.97},
+    html2canvas:{scale:2.5,useCORS:true,backgroundColor:'#f8f5ef',logging:false},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['avoid-all','css','legacy']}
+  };
+  showToast('📄 PDF生成中...');
+  html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+}
+
+// 共有データから引き継ぎ
+function loadShared() {
+  const d = JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}');
+  if (d.clientName) document.getElementById('clientName').value = d.clientName;
+  if (d.age) {
+    const profile = document.getElementById('clientProfile');
+    if (!profile.value && d.age) profile.value = d.age + '歳';
+  }
+}
+
+// 保存データを復元
+function loadSaved() {
+  const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (d.scores) scores = d.scores;
+  if (d.clientName) document.getElementById('clientName').value = d.clientName;
+  if (d.clientDate) document.getElementById('clientDate').value = d.clientDate;
+  if (d.clientProfile) document.getElementById('clientProfile').value = d.clientProfile;
+  if (d.fpOffice) document.getElementById('fpOffice').value = d.fpOffice;
+  if (d.fpName) document.getElementById('fpName').value = d.fpName;
+  if (d.fpContact) document.getElementById('fpContact').value = d.fpContact;
+  if (d.fpMemo) document.getElementById('fpMemo').value = d.fpMemo;
+}
+
+// 初期化
+loadSaved();
+loadShared();
+initGrid();
+if (Object.keys(scores).length > 0) updateAll();
+updateHistory();
+updateCTA();
+</script>
+</body>
+</html>
