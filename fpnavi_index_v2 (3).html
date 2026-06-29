@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FPナビ｜Life Planning Suite ― FP相談を、もっと伝わる・もっと売れるものに</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+
+/* HEADER */
+header{background:var(--navy);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:baseline;gap:14px}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:20px;letter-spacing:.05em}
+.brand-sub{color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.12em}
+.header-cta{background:var(--gold);color:var(--navy);font-weight:700;font-size:12px;padding:8px 18px;border-radius:4px;text-decoration:none;white-space:nowrap}
+
+/* HERO */
+.hero{background:linear-gradient(150deg,var(--navy) 0%,#1e3a6e 60%,#243460 100%);padding:72px 40px 64px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-80px;right:-80px;width:400px;height:400px;border-radius:50%;background:rgba(200,169,110,.06)}
+.hero::after{content:"";position:absolute;bottom:-60px;left:-40px;width:300px;height:300px;border-radius:50%;background:rgba(200,169,110,.04)}
+.hero-content{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.5);color:var(--gold);font-size:10px;letter-spacing:.25em;padding:5px 18px;border-radius:20px;margin-bottom:20px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:38px;line-height:1.4;margin-bottom:16px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-lead{color:rgba(255,255,255,.75);font-size:15px;line-height:1.9;margin-bottom:28px;max-width:580px;margin-left:auto;margin-right:auto}
+.hero-cta-group{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+.btn-primary{background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;padding:14px 32px;border-radius:6px;text-decoration:none;display:inline-block}
+.btn-primary:hover{background:#b8973c}
+.btn-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:14px;padding:14px 28px;border-radius:6px;text-decoration:none;display:inline-block}
+.btn-secondary:hover{background:rgba(255,255,255,.18)}
+.hero-note{color:rgba(255,255,255,.4);font-size:11px}
+
+/* PAIN POINTS */
+.pain{background:var(--white);padding:64px 40px}
+.pain-inner{max-width:900px;margin:0 auto}
+.section-eyebrow{font-size:10px;letter-spacing:.25em;color:var(--muted);font-weight:500;margin-bottom:12px;text-align:center}
+.section-title{font-family:"Noto Serif JP",serif;font-size:26px;color:var(--navy);text-align:center;margin-bottom:10px;line-height:1.5}
+.section-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:40px}
+.pain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.pain-card{background:var(--cream);border-radius:10px;padding:18px 20px;display:flex;align-items:flex-start;gap:12px}
+.pain-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.pain-text{font-size:13px;color:var(--text);line-height:1.7;font-weight:500}
+.pain-arrow{text-align:center;font-size:28px;color:var(--gold);margin:32px 0 8px}
+.solution-box{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:28px 32px;text-align:center;color:var(--white)}
+.solution-box p{font-size:16px;line-height:2;font-weight:500}
+.solution-box strong{color:var(--gold);font-size:18px}
+
+/* FEATURES */
+.features{padding:64px 40px;background:var(--cream)}
+.features-inner{max-width:900px;margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:40px}
+.feature-card{background:var(--white);border-radius:12px;padding:24px;border:1px solid var(--border)}
+.feature-icon{font-size:28px;margin-bottom:12px}
+.feature-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.feature-desc{font-size:13px;color:var(--muted);line-height:1.8}
+.feature-tag{display:inline-block;background:var(--green-light);color:var(--green);font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;margin-top:10px}
+
+/* TOOLS */
+.tools{padding:64px 40px;background:var(--white)}
+.tools-inner{max-width:960px;margin:0 auto}
+.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:40px}
+.tool-card{background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:22px;text-decoration:none;color:var(--text);display:block;transition:all .2s;position:relative;overflow:hidden}
+.tool-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transition:transform .2s}
+.tool-card:hover{box-shadow:0 8px 32px rgba(26,39,68,.12);transform:translateY(-3px);border-color:var(--gold)}
+.tool-card:hover::before{transform:scaleX(1)}
+.tool-num{font-size:10px;color:var(--muted);letter-spacing:.15em;margin-bottom:8px}
+.tool-icon{font-size:26px;margin-bottom:10px}
+.tool-name{font-family:"Noto Serif JP",serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.tool-benefit{font-size:13px;color:var(--green);font-weight:700;margin-bottom:6px}
+.tool-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px}
+.tool-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tool-cta-btn{display:block;margin-top:14px;background:var(--navy);color:var(--white);text-align:center;padding:9px 16px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none;transition:background .2s}
+.tool-card:hover .tool-cta-btn{background:var(--gold);color:var(--navy)}
+.tag{font-size:10px;background:var(--white);color:var(--muted);padding:3px 8px;border-radius:10px;border:1px solid var(--border)}
+.tag.hot{background:rgba(200,169,110,.15);color:#9a7030;border-color:rgba(200,169,110,.3);font-weight:700}
+.tag.new{background:rgba(42,122,79,.1);color:var(--green);border-color:rgba(42,122,79,.2);font-weight:700}
+
+/* REPORT CTA */
+.report-cta{padding:64px 40px;background:linear-gradient(135deg,var(--navy),#243460)}
+.report-cta-inner{max-width:800px;margin:0 auto;text-align:center}
+.report-cta-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:16px}
+.report-cta h2{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.5;margin-bottom:12px}
+.report-cta h2 em{color:var(--gold);font-style:normal}
+.report-cta p{color:rgba(255,255,255,.7);font-size:14px;margin-bottom:28px;line-height:1.9}
+.report-mockup{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:20px 24px;margin-bottom:28px;text-align:left}
+.report-mockup-title{font-size:11px;color:var(--gold);letter-spacing:.15em;margin-bottom:14px}
+.report-score-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.report-score-item{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.8)}
+.report-score-num{font-family:"Noto Serif JP",serif;font-size:18px;font-weight:700}
+.report-total{border-top:1px solid rgba(255,255,255,.15);margin-top:12px;padding-top:12px;text-align:center}
+.report-total-num{font-family:"Noto Serif JP",serif;font-size:42px;font-weight:700;color:var(--gold)}
+
+/* PRICE */
+.price{padding:64px 40px;background:var(--cream)}
+.price-inner{max-width:800px;margin:0 auto;text-align:center}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:36px}
+.price-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center}
+.price-card.featured{border-color:var(--gold);border-width:2px;position:relative}
+.price-card.featured::before{content:"おすすめ";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;padding:3px 14px;border-radius:20px}
+.price-type{font-size:11px;color:var(--muted);letter-spacing:.15em;margin-bottom:10px}
+.price-num{font-family:"Noto Serif JP",serif;font-size:32px;font-weight:700;color:var(--navy)}
+.price-unit{font-size:13px;color:var(--muted);margin-bottom:12px}
+.price-features{font-size:12px;color:var(--muted);line-height:2;text-align:left}
+.price-features li{padding-left:14px;position:relative}
+.price-features li::before{content:"✓";position:absolute;left:0;color:var(--green)}
+
+/* FINAL CTA */
+.final-cta{padding:80px 40px;background:var(--white);text-align:center}
+.final-cta-inner{max-width:600px;margin:0 auto}
+.final-cta h2{font-family:"Noto Serif JP",serif;font-size:28px;color:var(--navy);margin-bottom:14px;line-height:1.5}
+.final-cta p{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.9}
+.final-btn{display:inline-block;background:var(--navy);color:var(--white);font-weight:700;font-size:16px;padding:16px 40px;border-radius:8px;text-decoration:none;margin-bottom:10px}
+.final-btn:hover{background:#243460}
+.final-note{font-size:11px;color:var(--muted)}
+
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:24px 40px;line-height:2}
+
+@media(max-width:640px){
+  .hero{padding:48px 24px 40px}
+  .hero h1{font-size:26px}
+  .pain,.features,.tools,.report-cta,.price,.final-cta{padding:48px 24px}
+  header{padding:0 20px}
+  .report-score-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="brand-name">FPナビ</div>
+    <div class="brand-sub">LIFE PLANNING SUITE</div>
+  </div>
+  <a class="header-cta" href="fpnavi_report.html">📋 FP総合レポートを試す →</a>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">FP CONSULTING TOOLKIT 2026</div>
+    <h1>FP相談を、<br>もっと<em>伝わる</em>・<br>もっと<em>売れる</em>ものに。</h1>
+    <p class="hero-lead">「提案書を作る時間がない」「お客様に危機感が伝わらない」<br>
+    そんな悩みを解決。8つの直感的な診断ツールで、<br>
+    お客様の財務状況を<strong style="color:var(--gold)">100点満点で即座にスコアリング</strong>。<br>
+    面談後は、自動生成された美しいPDFをそのまま手渡すだけ。</p>
+    <div class="hero-cta-group">
+      <a class="btn-primary" href="fpnavi_report.html">📋 FP総合レポートを無料で試す →</a>
+      <a class="btn-secondary" href="#tools">ツール一覧を見る</a>
+    </div>
+    <div class="hero-note">会員登録不要・無料デモ体験・即時利用可能</div>
+  </div>
+</div>
+
+<!-- PAIN POINTS -->
+<div class="pain">
+  <div class="pain-inner">
+    <div class="section-eyebrow">PAIN POINTS</div>
+    <h2 class="section-title">FPのこんな悩み、ありませんか？</h2>
+    <p class="section-sub">個人FP・小規模FP事務所が抱える「時間・説得・継続」の3大課題</p>
+    <div class="pain-grid">
+      <div class="pain-card"><div class="pain-icon">😰</div><div class="pain-text">面談資料を毎回作るのに<strong>2〜3時間</strong>かかってしまう</div></div>
+      <div class="pain-card"><div class="pain-icon">😔</div><div class="pain-text">「老後が不安」と言っても<strong>数字で示せず</strong>お客様に危機感が伝わらない</div></div>
+      <div class="pain-card"><div class="pain-icon">😮‍💨</div><div class="pain-text">提案内容は正しいのに<strong>説得力が弱く</strong>契約に繋がらない</div></div>
+      <div class="pain-card"><div class="pain-icon">📋</div><div class="pain-text">面談後の<strong>PDF・提案書作成</strong>が面倒で後回しになってしまう</div></div>
+    </div>
+    <div class="pain-arrow">↓</div>
+    <div class="solution-box">
+      <p>ヒアリングしながらその場で入力・<strong>最短3分で診断完了</strong><br>
+      難しい説明は不要。スコアを見せるだけで<strong>お客様自身が「なんとかしなければ」と気づく</strong><br>
+      面談後は自動生成のPDFを手渡すだけで<strong>次のアクション（実行支援・顧問契約）へ</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="features">
+  <div class="features-inner">
+    <div class="section-eyebrow">FEATURES</div>
+    <h2 class="section-title">FPナビが選ばれる理由</h2>
+    <p class="section-sub">「計算ツール」ではなく「FP相談キット」として設計されています</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">感覚から数字へ。説得力が跳ね上がる</div>
+        <div class="feature-desc">100点満点のスコアリングだから、顧客自身が「今のままではマズイ」と一目で納得。アドバイスの説得力が一段上がります。</div>
+        <div class="feature-tag">⚡ 即時スコアリング</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏱️</div>
+        <div class="feature-title">面談中に完結。事務作業ゼロへ</div>
+        <div class="feature-desc">ヒアリングしながらその場で入力・即診断。面談後のレポート作成に何時間も費やす必要はもうありません。</div>
+        <div class="feature-tag">🔥 タイパ最優先</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <div class="feature-title">美しいPDFを、ワンクリックで</div>
+        <div class="feature-desc">スコア・グラフ・アドバイス・FP事務所情報が入ったプロ仕様の診断書をボタン1つで出力。顧客への「納得のお土産」になります。</div>
+        <div class="feature-tag">💼 提案力アップ</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <div class="feature-title">8ツールのデータが自動で連動</div>
+        <div class="feature-desc">ライフプランで入力した年収・家族構成が他のツールに自動引き継ぎ。入力の手間を最小限に抑えます。</div>
+        <div class="feature-tag">📂 共通データ連動</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AIコメントをFPが自由に編集</div>
+        <div class="feature-desc">AIが生成したアドバイスを、FP自身の提案スタイルに合わせてリライト可能。トーンも「マイルド」「厳しめ」から選択。</div>
+        <div class="feature-tag">✏️ カスタマイズ自在</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <div class="feature-title">面談履歴でスコア推移を管理</div>
+        <div class="feature-desc">前回・今回のスコアを比較表示。「前回より12点アップ！」という実績が顧客の継続モチベーションになります。</div>
+        <div class="feature-tag">📈 継続率アップ</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLS -->
+<div class="tools" id="tools">
+  <div class="tools-inner">
+    <div class="section-eyebrow">TOOL LIST</div>
+    <h2 class="section-title">8つの診断ツール一覧</h2>
+    <p class="section-sub">すべて無料・登録不要でデモ体験できます</p>
+    <div class="tools-grid">
+      <a class="tool-card" href="fpnavi_01_lifeplan_v2.html">
+        <div class="tool-num">TOOL 01</div>
+        <div class="tool-icon">📊</div>
+        <div class="tool-name">ライフプラン診断</div>
+        <div class="tool-benefit">→ 人生全体のお金の流れが3分で分かる</div>
+        <div class="tool-desc">現在〜老後まで資産推移をグラフで見える化。「何歳で資産がゼロになるか」を示し、人生設計全体の危機感を伝えます。</div>
+        <div class="tool-tags"><span class="tag hot">🔥 人気No.1</span><span class="tag">スコア診断</span><span class="tag">PDF出力</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_02_insurance_v2.html">
+        <div class="tool-num">TOOL 02</div>
+        <div class="tool-icon">🛡️</div>
+        <div class="tool-name">保険見直し診断</div>
+        <div class="tool-benefit">→ 年間○万円の削減余地が分かる</div>
+        <div class="tool-desc">死亡・医療・がん・就業不能の過不足をスコアリング。保障額の目安を自動計算して提案に直結。</div>
+        <div class="tool-tags"><span class="tag">スコア診断</span><span class="tag">レーダーチャート</span><span class="tag">PDF出力</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_03_mortgage_v2.html">
+        <div class="tool-num">TOOL 03</div>
+        <div class="tool-icon">🏠</div>
+        <div class="tool-name">住宅ローン比較診断</div>
+        <div class="tool-benefit">→ 返済総額をいくら減らせるか分かる</div>
+        <div class="tool-desc">変動vs固定・繰り上げ返済効果をリアルタイム試算。住宅ローン控除との組み合わせ提案まで対応。</div>
+        <div class="tool-tags"><span class="tag hot">🔥 相談頻度高</span><span class="tag">比較分析</span><span class="tag">スコア診断</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_04_inheritance_v2.html">
+        <div class="tool-num">TOOL 04</div>
+        <div class="tool-icon">📜</div>
+        <div class="tool-name">相続税診断</div>
+        <div class="tool-benefit">→ 相続税をいくら節税できるか分かる</div>
+        <div class="tool-desc">基礎控除・課税額・節税効果を金額で表示。生命保険・贈与・小規模宅地の節税シミュレーション付き。</div>
+        <div class="tool-tags"><span class="tag">節税シミュレーション</span><span class="tag">PDF出力</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_household_v2.html">
+        <div class="tool-num">TOOL 05</div>
+        <div class="tool-icon">💰</div>
+        <div class="tool-name">家計健全度診断</div>
+        <div class="tool-benefit">→ 家計の問題点が一目で分かる</div>
+        <div class="tool-desc">100点満点スコア＋レーダーチャート＋AIコメント。改善アクションプランと固定費削減額まで自動提示。</div>
+        <div class="tool-tags"><span class="tag hot">🔥 診断力No.1</span><span class="tag">レーダーチャート</span><span class="tag">PDF出力</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_06_education_v2.html">
+        <div class="tool-num">TOOL 06</div>
+        <div class="tool-icon">🎓</div>
+        <div class="tool-name">教育費シミュレーター</div>
+        <div class="tool-benefit">→ 大学までの総費用と毎月の積立額が分かる</div>
+        <div class="tool-desc">幼稚園〜大学まで公立/私立の選択で総額試算。学資保険 vs NISAの比較提案まで対応。</div>
+        <div class="tool-tags"><span class="tag">子育て世代向け</span><span class="tag">積立試算</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_07_retirement_v2.html">
+        <div class="tool-num">TOOL 07</div>
+        <div class="tool-icon">🏦</div>
+        <div class="tool-name">老後資金診断</div>
+        <div class="tool-benefit">→ 毎月いくら積立すれば不足を解消できるか分かる</div>
+        <div class="tool-desc">公的年金との差額・不足額を計算し「毎月〇万円積立で解消」の具体的解決策を提示。</div>
+        <div class="tool-tags"><span class="tag">不足額計算</span><span class="tag">解決策提示</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+      <a class="tool-card" href="fpnavi_08_nisa_v2.html">
+        <div class="tool-num">TOOL 08</div>
+        <div class="tool-icon">📈</div>
+        <div class="tool-name">NISA試算診断</div>
+        <div class="tool-benefit">→ 積立を増やすと老後がどう変わるか分かる</div>
+        <div class="tool-desc">「月3万→5万円にすると老後+980万円」の比較表示。成長投資枠・つみたて投資枠の使い分けも対応。</div>
+        <div class="tool-tags"><span class="tag hot">🔥 新NISA最新対応</span><span class="tag">比較表示</span></div>
+        <div class="tool-cta-btn">無料で診断してみる →</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT CTA -->
+<div class="report-cta">
+  <div class="report-cta-inner">
+    <div class="report-cta-badge">NEW ／ FP総合レポート</div>
+    <h2>8診断を<em>1枚に集約</em>。<br>面談後にそのまま渡せる<em>総合診断書</em>へ。</h2>
+    <p>各ツールのスコアを入力するだけで、<br>総合スコア・レーダーチャート・優先アクションプランが自動生成。<br>面談の「締め」として渡すことで、次の有料契約への導線になります。</p>
+    <div class="report-mockup">
+      <div class="report-mockup-title">📋 FP総合レポート ― サンプルイメージ</div>
+      <div class="report-score-row">
+        <div class="report-score-item"><span>📊 ライフプラン</span><span class="report-score-num" style="color:#f39c12">68</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+        <div class="report-score-item"><span>🛡️ 保険見直し</span><span class="report-score-num" style="color:#c0392b">52</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+        <div class="report-score-item"><span>🏠 住宅ローン</span><span class="report-score-num" style="color:#2a7a4f">88</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+        <div class="report-score-item"><span>💰 家計健全度</span><span class="report-score-num" style="color:#2a7a4f">92</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+        <div class="report-score-item"><span>📈 NISA活用</span><span class="report-score-num" style="color:#f39c12">74</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+        <div class="report-score-item"><span>🏦 老後資金</span><span class="report-score-num" style="color:#c0392b">61</span><span style="font-size:11px;color:rgba(255,255,255,.5)">点</span></div>
+      </div>
+      <div class="report-total">
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">FP 総合スコア</div>
+        <div class="report-total-num">76</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">点　Aランク：優秀</div>
+      </div>
+    </div>
+    <a class="btn-primary" href="fpnavi_report.html">FP総合レポートを試す（無料）→</a>
+  </div>
+</div>
+
+<!-- PRICE -->
+<div class="price">
+  <div class="price-inner">
+    <div class="section-eyebrow">PRICING</div>
+    <h2 class="section-title">シンプルな料金プラン</h2>
+    <p class="section-sub">まずは無料デモで体験。「使える」と確信してから導入できます。</p>
+
+    <div class="price-grid">
+
+      <div class="price-card">
+        <div class="price-type">FREE DEMO</div>
+        <div class="price-num">¥0</div>
+        <div class="price-unit">完全無料・登録不要・永続利用可</div>
+        <ul class="price-features">
+          <li>8つの診断ツール すべて利用可</li>
+          <li>FP総合レポート 利用可</li>
+          <li>PDF・印刷出力 利用可</li>
+          <li>FP事務所情報カスタマイズ</li>
+          <li>顧客データ保存（端末内）</li>
+        </ul>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">サポートなし。個人・商用利用ともに可。</p>
+      </div>
+
+      <div class="price-card featured">
+        <div class="price-type">MONTHLY</div>
+        <div class="price-num" style="font-size:28px">¥1,980</div>
+        <div class="price-unit">月額（初月無料・いつでも解約可）</div>
+        <ul class="price-features">
+          <li>無料版の全機能</li>
+          <li>法改正・制度改正への優先対応</li>
+          <li>新ツール追加時の優先案内</li>
+          <li>メールサポート（3営業日以内）</li>
+          <li>操作マニュアル・顧客向け説明書PDF</li>
+        </ul>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">※初月無料。2ヶ月目から¥1,980/月。<br>※3ヶ月後に¥2,980へ改定予定（既存ユーザーは旧価格を維持）。</p>
+      </div>
+
+      <div class="price-card">
+        <div class="price-type">BUY ONCE</div>
+        <div class="price-num" style="font-size:28px">¥19,800</div>
+        <div class="price-unit">買い切り（永続ライセンス）</div>
+        <ul class="price-features">
+          <li>無料版の全機能</li>
+          <li>法改正・制度改正への優先対応</li>
+          <li>新ツール追加時の優先案内</li>
+          <li>メールサポート（優先・1営業日以内）</li>
+          <li>操作マニュアル・顧客向け説明書PDF</li>
+          <li>将来のアップデート版を優先提供</li>
+        </ul>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">月額換算・約10ヶ月で元が取れます。長期利用にお得なプランです。</p>
+      </div>
+
+    </div>
+
+    <!-- 比較表 -->
+    <div style="margin-top:32px;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--navy);color:#fff">
+            <th style="padding:12px 16px;text-align:left;font-weight:500">機能</th>
+            <th style="padding:12px 16px;text-align:center;font-weight:500">無料</th>
+            <th style="padding:12px 16px;text-align:center;font-weight:500;background:rgba(200,169,110,.25)">月額 ¥1,980</th>
+            <th style="padding:12px 16px;text-align:center;font-weight:500">買い切り ¥19,800</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 16px">8つの診断ツール＋総合レポート</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700;background:#fffdf5">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:var(--cream)">
+            <td style="padding:10px 16px">PDF出力・印刷・FP情報カスタマイズ</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700;background:#fffdf5">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 16px">法改正・制度改正への優先対応</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--muted)">—</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700;background:#fffdf5">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:var(--cream)">
+            <td style="padding:10px 16px">操作マニュアル・顧客向け説明書PDF</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--muted)">—</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700;background:#fffdf5">✓</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 16px">メールサポート</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--muted)">—</td>
+            <td style="padding:10px 16px;text-align:center;background:#fffdf5">3営業日以内</td>
+            <td style="padding:10px 16px;text-align:center;font-weight:700;color:var(--navy)">1営業日以内（優先）</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 16px">将来のアップデート優先提供</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--muted)">—</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--muted);background:#fffdf5">—</td>
+            <td style="padding:10px 16px;text-align:center;color:var(--green);font-weight:700">✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background:var(--navy);border-radius:10px;padding:16px 24px;margin-top:20px;text-align:center">
+      <p style="color:var(--gold);font-size:12px;font-weight:700;margin-bottom:6px">🎯 今だけ特別価格</p>
+      <p style="color:#fff;font-size:14px;line-height:1.9">月額プランは現在<strong style="color:var(--gold)">¥1,980（初月無料）</strong>でご提供中。<br>3ヶ月後に¥2,980へ改定予定のため、<strong>今がお申し込みのタイミングです。</strong></p>
+      <p style="color:rgba(255,255,255,.5);font-size:11px;margin-top:8px">既存ユーザーは旧価格（¥1,980）を継続適用します。</p>
+    </div>
+
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:16px">
+      ご購入・お問い合わせ：<a href="https://note.com/fp3_pro" style="color:var(--navy);font-weight:700">note.com/fp3_pro</a> のメッセージ機能よりご連絡ください
+    </p>
+
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<div class="final-cta">
+  <div class="final-cta-inner">
+    <h2>まず、無料で体験してみてください。</h2>
+    <p>会員登録不要。ブラウザだけで今すぐ使えます。<br>
+    「これ、面談で使えそう」と思ったら、そのままPDF出力して顧客へ。<br>
+    導入に迷ったら、まずFP総合レポートからお試しください。</p>
+    <a class="final-btn" href="fpnavi_report.html">今すぐ無料で試す（登録不要）→</a><br>
+    <p class="final-note" style="margin-top:12px">※投資助言ではありません。本ツールは参考情報の提供を目的とした概算診断です。</p>
+  </div>
+</div>
+
+<footer>
+  FPナビ Life Planning Suite ― 2026年度版・新NISA対応済み<br>
+  投資助言ではありません。各診断は参考情報の提供を目的とした概算ツールです。<br>
+  © 2026 FPナビ ／ 一般社団法人人材育成支援機構
+</footer>
+
+</body>
+</html>
