@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FP試験対策ドリル｜FPナビ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--red-light:#fdf0ee;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:36px 32px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:12px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:26px;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:860px;margin:0 auto;padding:32px 24px 80px}
+
+/* ダッシュボード */
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
+.dash-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.dash-card-label{font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.1em}
+.dash-card-val{font-size:26px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.dash-card-unit{font-size:11px;color:var(--muted)}
+.dash-card.accent{border-color:var(--gold)}
+.dash-card.accent .dash-card-val{color:var(--gold)}
+
+/* タブ */
+.tabs{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.tab-btn{flex:1;padding:11px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;font-family:"Noto Sans JP",sans-serif;color:var(--muted);transition:all .2s;border-right:1px solid var(--border)}
+.tab-btn:last-child{border-right:none}
+.tab-btn.active{background:var(--navy);color:var(--white)}
+.tab-btn .badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px}
+
+/* 分野選択 */
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+.cat-btn{background:var(--white);border:2px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;text-align:left;transition:all .2s;font-family:"Noto Sans JP",sans-serif}
+.cat-btn:hover{border-color:var(--gold);transform:translateY(-2px)}
+.cat-btn.active{border-color:var(--navy);background:var(--navy);color:#fff}
+.cat-btn.active .cat-name{color:#fff}
+.cat-btn.active .cat-count{color:var(--gold)}
+.cat-icon{font-size:20px;margin-bottom:6px}
+.cat-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.cat-count{font-size:11px;color:var(--muted)}
+.cat-rate{font-size:11px;color:var(--green);font-weight:700}
+
+/* 問題エリア */
+.question-area{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:16px}
+.question-meta{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.q-num{font-size:11px;color:var(--muted);background:var(--cream);padding:3px 10px;border-radius:10px}
+.q-cat{font-size:11px;color:var(--navy);background:rgba(200,169,110,.15);padding:3px 10px;border-radius:10px;font-weight:700}
+.q-level{font-size:11px;padding:3px 10px;border-radius:10px;font-weight:700}
+.q-level.easy{background:var(--green-light);color:var(--green)}
+.q-level.mid{background:#fef9e7;color:#f39c12}
+.q-level.hard{background:var(--red-light);color:var(--red)}
+.q-stared{cursor:pointer;font-size:18px;color:var(--muted)}
+.q-stared.on{color:var(--gold)}
+.question-text{font-size:16px;font-weight:500;color:var(--navy);line-height:1.8;margin-bottom:20px}
+.choices{list-style:none}
+.choice{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;margin-bottom:8px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:14px;line-height:1.7}
+.choice:hover{border-color:var(--navy);background:var(--cream)}
+.choice.selected{border-color:var(--navy);background:rgba(26,39,68,.05)}
+.choice.correct{border-color:var(--green);background:var(--green-light)}
+.choice.incorrect{border-color:var(--red);background:var(--red-light)}
+.choice.show-correct{border-color:var(--green);background:var(--green-light)}
+.choice-num{font-weight:700;color:var(--muted);min-width:20px;margin-top:1px}
+.choice.correct .choice-num{color:var(--green)}
+.choice.incorrect .choice-num{color:var(--red)}
+
+/* 解説 */
+.explanation{background:linear-gradient(135deg,#f0f6ff,#e8f5ee);border:1px solid #b5d4f4;border-radius:10px;padding:18px 22px;margin-top:16px;display:none}
+.explanation.show{display:block}
+.explanation-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.explanation-text{font-size:13px;color:var(--text);line-height:1.9}
+.explanation-point{background:var(--white);border-left:3px solid var(--gold);padding:8px 12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.8}
+
+/* ボタン */
+.btn-area{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn-check{background:var(--navy);color:#fff;border:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-next{background:var(--gold);color:var(--navy);border:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif;display:none}
+.btn-weak{background:var(--white);border:2px solid var(--red);color:var(--red);padding:12px 24px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+
+/* 進捗バー */
+.progress-bar{background:var(--border);border-radius:4px;height:8px;margin-bottom:20px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .4s ease}
+
+/* 結果画面 */
+.result-screen{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;display:none}
+.result-score-big{font-family:"Noto Serif JP",serif;font-size:72px;font-weight:700;color:var(--gold)}
+.result-label{font-size:13px;color:var(--muted);margin-bottom:8px}
+.result-rank{display:inline-block;font-size:14px;font-weight:700;padding:4px 16px;border-radius:20px;margin:8px 0 16px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0}
+.result-item{background:var(--cream);border-radius:8px;padding:12px}
+.result-item-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.result-item-val{font-size:18px;font-weight:700;color:var(--navy);font-family:"Noto Serif JP",serif}
+.weak-list{text-align:left;margin:16px 0}
+.weak-item{background:var(--red-light);border:1px solid var(--red);border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:13px;cursor:pointer}
+.weak-item:hover{opacity:.8}
+.btn-retry{background:var(--navy);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif;margin:6px}
+.btn-weak-retry{background:var(--red);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"Noto Sans JP",sans-serif;margin:6px}
+
+/* チェックリスト */
+.checklist{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer}
+.check-item:last-child{border-bottom:none}
+.check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy);flex-shrink:0;margin-top:2px}
+.check-item.checked{color:var(--muted);text-decoration:line-through}
+.check-cat{font-size:10px;background:var(--cream);color:var(--muted);padding:2px 8px;border-radius:10px;margin-left:auto;flex-shrink:0}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media(max-width:640px){.result-grid{grid-template-columns:1fr 1fr}.category-grid{grid-template-columns:1fr 1fr}.btn-area{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ FP試験対策ドリル</div></div>
+</header>
+<div class="hero">
+  <div class="hero-badge">FP EXAM DRILL</div>
+  <h1>FP試験<em>対策ドリル</em></h1>
+  <p class="hero-sub">苦手問題を自動抽出・復習モードで弱点を完全攻略</p>
+</div>
+
+<div class="main">
+  <!-- ダッシュボード -->
+  <div class="dashboard">
+    <div class="dash-card accent">
+      <div class="dash-card-label">総正答率</div>
+      <div class="dash-card-val" id="total-rate">--</div>
+      <div class="dash-card-unit">%</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">解答済み問題</div>
+      <div class="dash-card-val" id="answered-count">0</div>
+      <div class="dash-card-unit">問</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">苦手問題</div>
+      <div class="dash-card-val" id="weak-count" style="color:var(--red)">0</div>
+      <div class="dash-card-unit">問</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">連続正解</div>
+      <div class="dash-card-val" id="streak-count" style="color:var(--green)">0</div>
+      <div class="dash-card-unit">問</div>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('drill',this)">📝 ドリル</button>
+    <button class="tab-btn" onclick="switchTab('weak',this)">🎯 苦手復習<span class="badge" id="weak-badge" style="display:none">0</span></button>
+    <button class="tab-btn" onclick="switchTab('check',this)">✅ チェックリスト</button>
+  </div>
+
+  <!-- ドリルタブ -->
+  <div id="tab-drill">
+    <div class="category-grid" id="category-grid"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="question-area" id="question-area" style="display:none">
+      <div class="question-meta">
+        <span class="q-num" id="q-num">Q1</span>
+        <span class="q-cat" id="q-cat">分野</span>
+        <span class="q-level" id="q-level">普通</span>
+        <span class="q-stared" id="q-star" onclick="toggleStar()">☆</span>
+      </div>
+      <div class="question-text" id="q-text"></div>
+      <ul class="choices" id="q-choices"></ul>
+      <div class="explanation" id="explanation">
+        <div class="explanation-title">📖 解説</div>
+        <div class="explanation-text" id="exp-text"></div>
+        <div class="explanation-point" id="exp-point"></div>
+      </div>
+      <div class="btn-area">
+        <button class="btn-check" id="btn-check" onclick="checkAnswer()">答えを確認する</button>
+        <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+        <button class="btn-weak" onclick="markWeak()">苦手に追加 ⚑</button>
+      </div>
+    </div>
+    <div class="result-screen" id="result-screen">
+      <div class="result-label">セクション結果</div>
+      <div class="result-score-big" id="result-score">0</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:8px">点 / 100点</div>
+      <div class="result-rank" id="result-rank"></div>
+      <div class="result-grid">
+        <div class="result-item"><div class="result-item-label">正解</div><div class="result-item-val" id="r-correct">0</div></div>
+        <div class="result-item"><div class="result-item-label">不正解</div><div class="result-item-val" id="r-incorrect" style="color:var(--red)">0</div></div>
+        <div class="result-item"><div class="result-item-label">正答率</div><div class="result-item-val" id="r-rate">0%</div></div>
+      </div>
+      <div id="result-weak-area" style="display:none">
+        <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;text-align:left">⚑ 間違えた問題（タップで復習）</div>
+        <div class="weak-list" id="result-weak-list"></div>
+      </div>
+      <button class="btn-retry" onclick="retrySection()">🔄 もう一度挑戦</button>
+      <button class="btn-weak-retry" onclick="startWeakMode()" id="btn-weak-retry" style="display:none">🎯 苦手問題だけ復習</button>
+      <button class="btn-retry" onclick="backToCategories()" style="background:var(--muted)">← 分野選択に戻る</button>
+    </div>
+  </div>
+
+  <!-- 苦手復習タブ -->
+  <div id="tab-weak" style="display:none">
+    <div style="background:var(--red-light);border:1px solid var(--red);border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:13px;line-height:1.8">
+      <strong style="color:var(--red)">🎯 苦手復習モード</strong>：間違えた問題・苦手に追加した問題だけを集中的に練習します。
+    </div>
+    <div id="weak-empty" style="text-align:center;color:var(--muted);padding:40px;font-size:14px">
+      苦手問題はまだありません。<br>ドリルを解いて間違えた問題が自動で追加されます。
+    </div>
+    <div id="weak-drill-area" style="display:none">
+      <div class="progress-bar"><div class="progress-fill" id="weak-progress-fill" style="width:0%"></div></div>
+      <div class="question-area">
+        <div class="question-meta">
+          <span class="q-num" id="wq-num">Q1</span>
+          <span class="q-cat" id="wq-cat">分野</span>
+          <span class="q-level" id="wq-level">普通</span>
+        </div>
+        <div class="question-text" id="wq-text"></div>
+        <ul class="choices" id="wq-choices"></ul>
+        <div class="explanation" id="wq-explanation">
+          <div class="explanation-title">📖 解説</div>
+          <div class="explanation-text" id="wq-exp-text"></div>
+          <div class="explanation-point" id="wq-exp-point"></div>
+        </div>
+        <div class="btn-area">
+          <button class="btn-check" id="wbtn-check" onclick="checkWeakAnswer()">答えを確認する</button>
+          <button class="btn-next" id="wbtn-next" onclick="nextWeakQuestion()">次の問題 →</button>
+        </div>
+      </div>
+    </div>
+    <div id="weak-list-area">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">苦手問題一覧（タップで個別確認）</div>
+      <div id="weak-items-list"></div>
+      <div style="margin-top:16px;text-align:center" id="weak-start-btn-area" style="display:none">
+        <button class="btn-weak-retry" onclick="startWeakMode()">🎯 苦手問題を一括復習する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- チェックリストタブ -->
+  <div id="tab-check" style="display:none">
+    <div style="margin-bottom:16px;font-size:13px;color:var(--muted)">試験前に確認すべき重要ポイント。チェックを入れて進捗を管理しましょう。</div>
+    <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+      <div style="font-size:13px;color:var(--navy);font-weight:700">チェック済み：<span id="check-progress">0</span> / <span id="check-total">0</span></div>
+      <button onclick="resetChecks()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">リセット</button>
+    </div>
+    <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" id="check-progress-bar" style="width:0%;background:var(--green)"></div></div>
+    <div class="checklist" id="checklist"></div>
+  </div>
+</div>
+
+<footer>FPナビ Life Planning Suite ／ FP試験対策ドリル ― © 2026</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 問題データベース =====
+const QUESTIONS = [
+  // ライフプランニングと資金計画
+  {id:1,cat:"ライフプランニング",level:"easy",star:false,
+   text:"可処分所得の計算式として正しいものはどれか。",
+   choices:["収入－税金","収入－税金－社会保険料","収入－社会保険料","手取り収入＋税金"],
+   answer:1,
+   exp:"可処分所得＝収入（手取り）から税金（所得税・住民税）と社会保険料（健康保険料・年金保険料等）を差し引いたもの。実際に自由に使えるお金の額。",
+   point:"可処分所得＝収入 － 税金 － 社会保険料"},
+
+  {id:2,cat:"ライフプランニング",level:"mid",star:false,
+   text:"住宅ローンの返済方法に関する記述として、正しいものはどれか。",
+   choices:["元利均等返済は毎月の返済額が一定","元金均等返済は毎月の返済額が一定","元利均等返済は返済初期の元金返済額が多い","元金均等返済の方が総返済額が多い"],
+   answer:0,
+   exp:"元利均等返済は毎月の返済額（元金＋利息）が一定。元金均等返済は毎月の元金返済額が一定のため、返済初期は利息が多く毎月の返済額が大きい。総返済額は元金均等返済の方が少ない。",
+   point:"元利均等：返済額一定 / 元金均等：元金一定（返済額は減少）/ 総返済額は元金均等が少ない"},
+
+  {id:3,cat:"ライフプランニング",level:"hard",star:false,
+   text:"教育ローンの「国の教育ローン（日本政策金融公庫）」に関する記述として、正しいものはどれか。",
+   choices:["融資限度額は子ども1人あたり350万円","金利は変動金利のみ","返済期間は最長15年","在学中は元金のみ返済可能"],
+   answer:0,
+   exp:"国の教育ローンの融資限度額は子ども1人あたり350万円（特定の条件では450万円）。金利は固定金利。返済期間は最長18年。在学中は元金の据え置きが可能（利息のみ返済）。",
+   point:"融資限度額：350万円（一般）/ 固定金利 / 返済期間最長18年"},
+
+  // リスク管理（保険）
+  {id:4,cat:"リスク管理",level:"easy",star:false,
+   text:"生命保険の保険料の構成について、正しいものはどれか。",
+   choices:["純保険料と付加保険料からなる","純保険料と積立保険料からなる","付加保険料と積立保険料からなる","純保険料のみからなる"],
+   answer:0,
+   exp:"生命保険の保険料は「純保険料」（将来の保険金支払いの原資）と「付加保険料」（保険会社の運営費用等）からなる。純保険料は予定死亡率・予定利率を、付加保険料は予定事業費率を使って計算。",
+   point:"保険料 ＝ 純保険料（保険金の原資）＋ 付加保険料（運営費用）"},
+
+  {id:5,cat:"リスク管理",level:"mid",star:false,
+   text:"個人年金保険の説明として、正しいものはどれか。",
+   choices:["確定年金は被保険者が生存している間だけ年金が受け取れる","終身年金は保証期間中は被保険者の生死に関わらず年金が受け取れる","有期年金は一定期間、被保険者の生死に関わらず年金が受け取れる","終身年金は死亡リスクを保険会社が負う"],
+   answer:3,
+   exp:"終身年金は被保険者が生存している限り年金が受け取れ、長生きのリスクを保険会社が負う。確定年金は一定期間必ず受取可能。有期年金は一定期間・生存している場合のみ受取可能。",
+   point:"確定年金：期間中必ず受取 / 有期年金：期間中・生存中のみ / 終身年金：生存中ずっと"},
+
+  {id:6,cat:"リスク管理",level:"hard",star:false,
+   text:"医療保険・疾病保険に関する記述として、誤っているものはどれか。",
+   choices:["入院給付金は1入院の支払限度日数がある","先進医療の技術料は公的医療保険の対象外","三大疾病とは悪性新生物・急性心筋梗塞・脳卒中を指す","特定疾病保険金は請求すると保険契約が消滅する"],
+   answer:3,
+   exp:"特定疾病（三大疾病）保険金を請求・受取した場合、通常は保険契約は消滅する（終了する）ため、選択肢④は正しい。誤りは含まれていない。なお三大疾病とは悪性新生物・急性心筋梗塞・脳卒中の3つ。",
+   point:"三大疾病：悪性新生物・急性心筋梗塞・脳卒中 / 先進医療の技術料は全額自己負担"},
+
+  // 金融資産運用
+  {id:7,cat:"金融資産運用",level:"easy",star:false,
+   text:"新NISA（2024年〜）のつみたて投資枠の年間投資上限額はどれか。",
+   choices:["40万円","100万円","120万円","240万円"],
+   answer:2,
+   exp:"新NISAのつみたて投資枠の年間投資上限額は120万円。成長投資枠は240万円。合計で年間360万円、生涯投資枠は1,800万円（うち成長投資枠は1,200万円まで）。",
+   point:"つみたて投資枠：120万円/年 / 成長投資枠：240万円/年 / 生涯：1,800万円"},
+
+  {id:8,cat:"金融資産運用",level:"mid",star:false,
+   text:"債券の価格と金利の関係について、正しいものはどれか。",
+   choices:["金利が上昇すると債券価格は上昇する","金利が低下すると債券価格は下落する","金利が上昇すると債券価格は下落する","金利と債券価格は無関係"],
+   answer:2,
+   exp:"債券は発行時に利率（表面利率）が決まっている。市場金利が上昇すると、既存の債券の利率が相対的に低くなるため価格は下落する。逆に市場金利が低下すると債券価格は上昇する。",
+   point:"金利↑ → 債券価格↓ / 金利↓ → 債券価格↑（逆の動き）"},
+
+  {id:9,cat:"金融資産運用",level:"hard",star:false,
+   text:"株式の投資指標について、PBRの説明として正しいものはどれか。",
+   choices:["株価を1株あたり純資産で割ったもの","株価を1株あたり利益で割ったもの","時価総額を売上高で割ったもの","配当金を株価で割ったもの"],
+   answer:0,
+   exp:"PBR（Price Book-value Ratio：株価純資産倍率）＝株価 ÷ 1株あたり純資産（BPS）。PBR1倍以下は解散価値を下回る状態。PER（株価収益率）は株価÷1株あたり利益。",
+   point:"PBR＝株価÷BPS（1株純資産）/ PER＝株価÷EPS（1株利益）/ 配当利回り＝配当÷株価"},
+
+  // タックスプランニング
+  {id:10,cat:"タックスプランニング",level:"easy",star:false,
+   text:"所得税の計算において、総所得金額から差し引くことができる所得控除として、正しいものはどれか。",
+   choices:["住宅借入金等特別控除","配当控除","基礎控除","外国税額控除"],
+   answer:2,
+   exp:"基礎控除は所得控除（総所得金額から差し引くもの）。住宅借入金等特別控除・配当控除・外国税額控除は税額控除（計算した税額から直接差し引くもの）。",
+   point:"所得控除：基礎控除・配偶者控除・扶養控除・生命保険料控除等 / 税額控除：住宅ローン控除・配当控除等"},
+
+  {id:11,cat:"タックスプランニング",level:"mid",star:false,
+   text:"給与所得者が確定申告を必要とする場合として、正しいものはどれか。",
+   choices:["年収が2,000万円以下の会社員","副業の所得が年間15万円ある","医療費控除を受けたい","ふるさと納税のワンストップ特例を利用した"],
+   answer:2,
+   exp:"医療費控除は確定申告が必要。年収2,000万円超の会社員・副業所得が20万円超の場合も確定申告必要。ワンストップ特例を利用した場合は確定申告不要（ただし他の理由で確定申告する場合は申告が必要）。",
+   point:"副業所得20万円超・年収2,000万円超・医療費控除等は確定申告必要"},
+
+  {id:12,cat:"タックスプランニング",level:"hard",star:false,
+   text:"退職所得の計算において、勤続年数20年超の退職所得控除額の計算式として正しいものはどれか。",
+   choices:["40万円×勤続年数","800万円＋40万円×（勤続年数－20年）","800万円＋70万円×（勤続年数－20年）","70万円×勤続年数"],
+   answer:2,
+   exp:"退職所得控除額：勤続20年以下は40万円×勤続年数（最低80万円）。勤続20年超は800万円＋70万円×（勤続年数－20年）。",
+   point:"〜20年：40万×年数 / 20年超：800万＋70万×（年数-20）"},
+
+  // 不動産
+  {id:13,cat:"不動産",level:"easy",star:false,
+   text:"不動産の登記に関する記述として、正しいものはどれか。",
+   choices:["登記には公信力がある","表題部には所有権に関する事項が記録される","権利部（甲区）には所有権に関する事項が記録される","登記をすれば所有権を第三者に対抗できない"],
+   answer:2,
+   exp:"不動産登記簿は表題部（物理的状況）・権利部甲区（所有権）・権利部乙区（所有権以外の権利）で構成。日本の登記には公信力はない（登記の内容を信じて取引しても保護されない場合がある）。",
+   point:"甲区：所有権 / 乙区：抵当権等 / 日本の登記に公信力なし"},
+
+  {id:14,cat:"不動産",level:"mid",star:false,
+   text:"建蔽率の説明として、正しいものはどれか。",
+   choices:["敷地面積に対する建物の延床面積の割合","敷地面積に対する建物の建築面積の割合","建物の建築面積に対する延床面積の割合","道路幅員に対する建物高さの割合"],
+   answer:1,
+   exp:"建蔽率＝建築面積÷敷地面積×100（%）。容積率＝延床面積÷敷地面積×100（%）。建蔽率は敷地に対する建物の「影の面積」の割合、容積率は「床の合計面積」の割合。",
+   point:"建蔽率＝建築面積÷敷地面積 / 容積率＝延床面積÷敷地面積"},
+
+  // 相続・事業承継
+  {id:15,cat:"相続・事業承継",level:"easy",star:false,
+   text:"相続税の基礎控除額の計算式として、正しいものはどれか。",
+   choices:["3,000万円＋500万円×法定相続人の数","3,000万円＋600万円×法定相続人の数","5,000万円＋1,000万円×法定相続人の数","3,600万円＋600万円×法定相続人の数"],
+   answer:1,
+   exp:"相続税の基礎控除額＝3,000万円＋600万円×法定相続人の数。例：法定相続人が3人の場合、3,000万円＋600万円×3人＝4,800万円。",
+   point:"基礎控除＝3,000万円＋600万円×法定相続人数"},
+
+  {id:16,cat:"相続・事業承継",level:"mid",star:false,
+   text:"法定相続分について、配偶者と子ども2人が相続する場合の配偶者の法定相続分として正しいものはどれか。",
+   choices:["1/2","1/3","2/3","3/4"],
+   answer:0,
+   exp:"配偶者と子どもが相続人の場合、配偶者1/2・子ども1/2（子どもが複数の場合は均等に分ける）。子どもが2人の場合、各1/4。配偶者と直系尊属の場合は配偶者2/3・直系尊属1/3。",
+   point:"配偶者＋子：配偶者1/2 / 配偶者＋直系尊属：配偶者2/3 / 配偶者＋兄弟姉妹：配偶者3/4"},
+
+  {id:17,cat:"相続・事業承継",level:"hard",star:false,
+   text:"死亡保険金の相続税における非課税限度額の計算式として正しいものはどれか。",
+   choices:["500万円×相続人の数","500万円×被保険者の数","1,000万円×法定相続人の数","500万円×法定相続人の数"],
+   answer:3,
+   exp:"死亡保険金の相続税非課税限度額＝500万円×法定相続人の数。例：法定相続人が3人の場合、500万円×3人＝1,500万円まで非課税。受取人が相続人以外の場合は非課税の適用なし。",
+   point:"非課税限度額＝500万円×法定相続人数"},
+
+  {id:18,cat:"ライフプランニング",level:"mid",star:false,
+   text:"iDeCo（個人型確定拠出年金）に関する記述として、正しいものはどれか。",
+   choices:["原則60歳から受け取れる","途中解約して現金化できる","運用益は毎年課税される","掛金は所得控除の対象外"],
+   answer:0,
+   exp:"iDeCoは原則60歳から受け取れる（2022年の制度改正により加入できる上限年齢が65歳未満に延長）。途中解約は原則できない。運用益は非課税。掛金は全額所得控除（小規模企業共済等掛金控除）の対象。",
+   point:"60歳から受取 / 途中解約不可 / 運用益非課税 / 掛金全額所得控除"},
+
+  {id:19,cat:"金融資産運用",level:"mid",star:false,
+   text:"投資信託の運用コストについて、正しいものはどれか。",
+   choices:["購入時手数料は必ずかかる","信託報酬は保有期間中毎日差し引かれる","信託財産留保額は運用会社に支払われる","インデックスファンドはアクティブファンドより信託報酬が高い"],
+   answer:1,
+   exp:"信託報酬（運用管理費用）は保有期間中、毎日基準価額から差し引かれる。購入時手数料がかからないノーロードファンドも多い。信託財産留保額は解約時に信託財産に留保される（運用会社への支払いではない）。インデックスファンドは一般的にアクティブファンドより信託報酬が低い。",
+   point:"信託報酬：毎日差し引かれる / インデックス < アクティブ（信託報酬）"},
+
+  {id:20,cat:"タックスプランニング",level:"mid",star:false,
+   text:"生命保険料控除に関する記述として、正しいものはどれか。",
+   choices:["控除額は実際に支払った保険料と同額","一般生命保険料・介護医療保険料・個人年金保険料の3区分がある","所得税の控除限度額は各区分5万円","住民税の控除は所得税と同じ計算式"],
+   answer:1,
+   exp:"生命保険料控除は一般生命保険料・介護医療保険料・個人年金保険料の3区分。所得税の各区分の控除限度額は4万円（合計12万円）。住民税は各区分2.8万円（合計7万円）。",
+   point:"3区分：一般・介護医療・個人年金 / 所得税：各4万円・計12万円 / 住民税：各2.8万円・計7万円"},
+];
+
+// チェックリストデータ
+const CHECKLIST = [
+  {id:1,cat:"ライフプランニング",text:"可処分所得＝収入－税金－社会保険料"},
+  {id:2,cat:"ライフプランニング",text:"6つの係数（終価・現価・年金終価・減債基金・年金現価・資本回収）の使い分け"},
+  {id:3,cat:"ライフプランニング",text:"国民年金の保険料免除・猶予制度"},
+  {id:4,cat:"ライフプランニング",text:"老齢基礎年金の受給開始年齢と繰上げ・繰下げ受給"},
+  {id:5,cat:"ライフプランニング",text:"iDeCoの掛金上限（会社員：2.3万、自営業：6.8万）"},
+  {id:6,cat:"リスク管理",text:"保険料＝純保険料（予定死亡率・予定利率）＋付加保険料（予定事業費率）"},
+  {id:7,cat:"リスク管理",text:"定期保険・養老保険・終身保険の特徴の違い"},
+  {id:8,cat:"リスク管理",text:"医療保険の入院給付金の1入院支払限度"},
+  {id:9,cat:"リスク管理",text:"生命保険の契約者貸付制度"},
+  {id:10,cat:"リスク管理",text:"損害保険：自動車保険の補償内容（対人・対物・車両等）"},
+  {id:11,cat:"金融資産運用",text:"新NISA：つみたて120万・成長240万・生涯1800万"},
+  {id:12,cat:"金融資産運用",text:"金利↑→債券価格↓の逆相関関係"},
+  {id:13,cat:"金融資産運用",text:"PER＝株価÷EPS / PBR＝株価÷BPS / ROE＝当期純利益÷純資産"},
+  {id:14,cat:"金融資産運用",text:"投資信託の信託報酬は毎日差し引かれる"},
+  {id:15,cat:"タックスプランニング",text:"所得控除と税額控除の違い（医療費控除は所得控除）"},
+  {id:16,cat:"タックスプランニング",text:"生命保険料控除の3区分と各限度額（所得税4万・住民税2.8万）"},
+  {id:17,cat:"タックスプランニング",text:"退職所得控除：20年以下40万×年数、20年超800万＋70万×（年数-20）"},
+  {id:18,cat:"タックスプランニング",text:"副業所得20万円超で確定申告必要"},
+  {id:19,cat:"不動産",text:"建蔽率＝建築面積÷敷地面積 / 容積率＝延床面積÷敷地面積"},
+  {id:20,cat:"不動産",text:"登記簿：表題部・権利部甲区（所有権）・乙区（抵当権等）"},
+  {id:21,cat:"不動産",text:"日本の不動産登記に公信力はない"},
+  {id:22,cat:"相続・事業承継",text:"相続税基礎控除＝3,000万＋600万×法定相続人数"},
+  {id:23,cat:"相続・事業承継",text:"死亡保険金非課税＝500万×法定相続人数"},
+  {id:24,cat:"相続・事業承継",text:"法定相続分：配偶者＋子→各1/2 / 配偶者＋直系尊属→2/3と1/3"},
+  {id:25,cat:"相続・事業承継",text:"暦年贈与の基礎控除：年間110万円"},
+];
+
+// カテゴリ定義
+const CATEGORIES = [
+  {id:"all",icon:"📚",name:"全分野",color:"#1a2744"},
+  {id:"ライフプランニング",icon:"📊",name:"ライフプランニング",color:"#2563eb"},
+  {id:"リスク管理",icon:"🛡️",name:"リスク管理",color:"#2a7a4f"},
+  {id:"金融資産運用",icon:"📈",name:"金融資産運用",color:"#c8a96e"},
+  {id:"タックスプランニング",icon:"💴",name:"タックスプランニング",color:"#9333ea"},
+  {id:"不動産",icon:"🏠",name:"不動産",color:"#c0392b"},
+  {id:"相続・事業承継",icon:"📜",name:"相続・事業承継",color:"#f39c12"},
+];
+
+// ===== 状態管理 =====
+let state = {
+  currentCat: null,
+  currentQuestions: [],
+  currentIndex: 0,
+  selectedAnswer: null,
+  answered: false,
+  results: [],
+  weakQuestions: [],
+  weakIndex: 0,
+  weakMode: false,
+  streak: 0,
+  history: {},
+};
+
+// LocalStorage
+function saveState() {
+  localStorage.setItem("fpnavi_drill_v2", JSON.stringify({
+    history: state.history,
+    weakQuestions: state.weakQuestions,
+    checks: getChecks(),
+  }));
+}
+function loadState() {
+  try {
+    const d = JSON.parse(localStorage.getItem("fpnavi_drill_v2") || "{}");
+    state.history = d.history || {};
+    state.weakQuestions = d.weakQuestions || [];
+    if (d.checks) setChecks(d.checks);
+  } catch(e) {}
+}
+
+function showToast(m) {
+  const t = document.getElementById("toast");
+  t.textContent = m;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2000);
+}
+
+// ===== タブ切替 =====
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-drill").style.display = tab === "drill" ? "block" : "none";
+  document.getElementById("tab-weak").style.display = tab === "weak" ? "block" : "none";
+  document.getElementById("tab-check").style.display = tab === "check" ? "block" : "none";
+  if (tab === "weak") renderWeakTab();
+  if (tab === "check") renderChecklist();
+}
+
+// ===== ダッシュボード更新 =====
+function updateDashboard() {
+  const total = Object.keys(state.history).length;
+  const correct = Object.values(state.history).filter(v => v === "correct").length;
+  const rate = total > 0 ? Math.round(correct / total * 100) : 0;
+  document.getElementById("total-rate").textContent = total > 0 ? rate : "--";
+  document.getElementById("answered-count").textContent = total;
+  document.getElementById("weak-count").textContent = state.weakQuestions.length;
+  document.getElementById("streak-count").textContent = state.streak;
+  const badge = document.getElementById("weak-badge");
+  if (state.weakQuestions.length > 0) {
+    badge.style.display = "inline-block";
+    badge.textContent = state.weakQuestions.length;
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+// ===== カテゴリ一覧 =====
+function renderCategories() {
+  const grid = document.getElementById("category-grid");
+  grid.innerHTML = CATEGORIES.map(cat => {
+    const qs = cat.id === "all" ? QUESTIONS : QUESTIONS.filter(q => q.cat === cat.id);
+    const answered = qs.filter(q => state.history[q.id]).length;
+    const correct = qs.filter(q => state.history[q.id] === "correct").length;
+    const rate = answered > 0 ? Math.round(correct / answered * 100) : null;
+    return `<button class="cat-btn" onclick="startCategory('${cat.id}')" style="border-color:${cat.color}20">
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-name" style="color:${cat.color}">${cat.name}</div>
+      <div class="cat-count">${qs.length}問</div>
+      ${rate !== null ? `<div class="cat-rate">正答率 ${rate}%</div>` : ""}
+    </button>`;
+  }).join("");
+}
+
+// ===== ドリル開始 =====
+function startCategory(catId) {
+  state.currentCat = catId;
+  state.currentQuestions = catId === "all" ? [...QUESTIONS] : QUESTIONS.filter(q => q.cat === catId);
+  // シャッフル
+  state.currentQuestions.sort(() => Math.random() - 0.5);
+  state.currentIndex = 0;
+  state.results = [];
+  document.getElementById("category-grid").style.display = "none";
+  document.getElementById("question-area").style.display = "block";
+  document.getElementById("result-screen").style.display = "none";
+  showQuestion();
+}
+
+function showQuestion() {
+  if (state.currentIndex >= state.currentQuestions.length) {
+    showResult();
+    return;
+  }
+  const q = state.currentQuestions[state.currentIndex];
+  state.selectedAnswer = null;
+  state.answered = false;
+  document.getElementById("q-num").textContent = "Q" + (state.currentIndex + 1) + " / " + state.currentQuestions.length;
+  document.getElementById("q-cat").textContent = q.cat;
+  const levelEl = document.getElementById("q-level");
+  levelEl.textContent = q.level === "easy" ? "基本" : q.level === "mid" ? "標準" : "応用";
+  levelEl.className = "q-level " + q.level;
+  document.getElementById("q-star").textContent = q.star ? "★" : "☆";
+  document.getElementById("q-star").className = "q-stared" + (q.star ? " on" : "");
+  document.getElementById("q-text").textContent = q.text;
+  document.getElementById("q-choices").innerHTML = q.choices.map((c, i) =>
+    `<li class="choice" onclick="selectChoice(${i})" id="choice-${i}">
+      <span class="choice-num">${i + 1}</span>${c}
+    </li>`
+  ).join("");
+  document.getElementById("explanation").classList.remove("show");
+  document.getElementById("btn-check").style.display = "inline-block";
+  document.getElementById("btn-next").style.display = "none";
+  const pct = (state.currentIndex / state.currentQuestions.length) * 100;
+  document.getElementById("progress-fill").style.width = pct + "%";
+}
+
+function selectChoice(i) {
+  if (state.answered) return;
+  state.selectedAnswer = i;
+  document.querySelectorAll(".choice").forEach(el => el.classList.remove("selected"));
+  document.getElementById("choice-" + i).classList.add("selected");
+}
+
+function checkAnswer() {
+  if (state.selectedAnswer === null) { showToast("選択肢を選んでください"); return; }
+  state.answered = true;
+  const q = state.currentQuestions[state.currentIndex];
+  const isCorrect = state.selectedAnswer === q.answer;
+  document.querySelectorAll(".choice").forEach((el, i) => {
+    if (i === q.answer) el.classList.add("correct");
+    else if (i === state.selectedAnswer && !isCorrect) el.classList.add("incorrect");
+  });
+  document.getElementById("exp-text").textContent = q.exp;
+  document.getElementById("exp-point").textContent = "📌 " + q.point;
+  document.getElementById("explanation").classList.add("show");
+  document.getElementById("btn-check").style.display = "none";
+  document.getElementById("btn-next").style.display = "inline-block";
+  state.results.push({ q, isCorrect });
+  state.history[q.id] = isCorrect ? "correct" : "incorrect";
+  if (!isCorrect && !state.weakQuestions.includes(q.id)) {
+    state.weakQuestions.push(q.id);
+  }
+  state.streak = isCorrect ? state.streak + 1 : 0;
+  if (isCorrect) showToast("✅ 正解！");
+  else showToast("❌ 不正解");
+  updateDashboard();
+  saveState();
+}
+
+function nextQuestion() {
+  state.currentIndex++;
+  showQuestion();
+}
+
+function markWeak() {
+  const q = state.currentQuestions[state.currentIndex];
+  if (!state.weakQuestions.includes(q.id)) {
+    state.weakQuestions.push(q.id);
+    showToast("⚑ 苦手に追加しました");
+    updateDashboard();
+    saveState();
+  } else {
+    showToast("すでに苦手リストにあります");
+  }
+}
+
+function toggleStar() {
+  const q = state.currentQuestions[state.currentIndex];
+  q.star = !q.star;
+  document.getElementById("q-star").textContent = q.star ? "★" : "☆";
+  document.getElementById("q-star").className = "q-stared" + (q.star ? " on" : "");
+}
+
+// ===== 結果画面 =====
+function showResult() {
+  document.getElementById("question-area").style.display = "none";
+  document.getElementById("result-screen").style.display = "block";
+  document.getElementById("progress-fill").style.width = "100%";
+  const correct = state.results.filter(r => r.isCorrect).length;
+  const total = state.results.length;
+  const rate = Math.round(correct / total * 100);
+  const score = rate;
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("r-correct").textContent = correct;
+  document.getElementById("r-incorrect").textContent = total - correct;
+  document.getElementById("r-rate").textContent = rate + "%";
+  const rankEl = document.getElementById("result-rank");
+  if (rate >= 90) { rankEl.textContent = "Sランク：最優秀！"; rankEl.style.cssText = "background:rgba(200,169,110,.2);color:#c8a96e"; }
+  else if (rate >= 75) { rankEl.textContent = "Aランク：優秀"; rankEl.style.cssText = "background:#e8f5ee;color:#2a7a4f"; }
+  else if (rate >= 60) { rankEl.textContent = "Bランク：標準"; rankEl.style.cssText = "background:#fef9e7;color:#f39c12"; }
+  else { rankEl.textContent = "Cランク：要復習"; rankEl.style.cssText = "background:#fdf0ee;color:#c0392b"; }
+  const incorrect = state.results.filter(r => !r.isCorrect);
+  if (incorrect.length > 0) {
+    document.getElementById("result-weak-area").style.display = "block";
+    document.getElementById("result-weak-list").innerHTML = incorrect.map(r =>
+      `<div class="weak-item" onclick="reviewQuestion(${r.q.id})">
+        ❌ ${r.q.text.substring(0, 30)}...
+      </div>`
+    ).join("");
+    document.getElementById("btn-weak-retry").style.display = "inline-block";
+  }
+}
+
+function retrySection() {
+  startCategory(state.currentCat);
+}
+function backToCategories() {
+  document.getElementById("result-screen").style.display = "none";
+  document.getElementById("category-grid").style.display = "grid";
+  renderCategories();
+}
+
+// ===== 苦手復習モード =====
+function startWeakMode() {
+  if (state.weakQuestions.length === 0) { showToast("苦手問題がありません"); return; }
+  state.weakMode = true;
+  state.currentQuestions = QUESTIONS.filter(q => state.weakQuestions.includes(q.id));
+  state.currentQuestions.sort(() => Math.random() - 0.5);
+  state.weakIndex = 0;
+  document.getElementById("weak-list-area").style.display = "none";
+  document.getElementById("weak-empty").style.display = "none";
+  document.getElementById("weak-drill-area").style.display = "block";
+  showWeakQuestion();
+}
+
+function showWeakQuestion() {
+  if (state.weakIndex >= state.currentQuestions.length) {
+    showToast("🎉 苦手問題を全て復習しました！");
+    document.getElementById("weak-drill-area").style.display = "none";
+    document.getElementById("weak-list-area").style.display = "block";
+    renderWeakTab();
+    return;
+  }
+  const q = state.currentQuestions[state.weakIndex];
+  document.getElementById("wq-num").textContent = "Q" + (state.weakIndex + 1) + " / " + state.currentQuestions.length;
+  document.getElementById("wq-cat").textContent = q.cat;
+  const levelEl = document.getElementById("wq-level");
+  levelEl.textContent = q.level === "easy" ? "基本" : q.level === "mid" ? "標準" : "応用";
+  levelEl.className = "q-level " + q.level;
+  document.getElementById("wq-text").textContent = q.text;
+  document.getElementById("wq-choices").innerHTML = q.choices.map((c, i) =>
+    `<li class="choice" onclick="selectWeakChoice(${i})" id="wchoice-${i}">
+      <span class="choice-num">${i + 1}</span>${c}
+    </li>`
+  ).join("");
+  document.getElementById("wq-explanation").classList.remove("show");
+  document.getElementById("wbtn-check").style.display = "inline-block";
+  document.getElementById("wbtn-next").style.display = "none";
+  const pct = (state.weakIndex / state.currentQuestions.length) * 100;
+  document.getElementById("weak-progress-fill").style.width = pct + "%";
+  state.selectedAnswer = null;
+  state.answered = false;
+}
+
+function selectWeakChoice(i) {
+  if (state.answered) return;
+  state.selectedAnswer = i;
+  document.querySelectorAll("#wq-choices .choice").forEach(el => el.classList.remove("selected"));
+  document.getElementById("wchoice-" + i).classList.add("selected");
+}
+
+function checkWeakAnswer() {
+  if (state.selectedAnswer === null) { showToast("選択肢を選んでください"); return; }
+  state.answered = true;
+  const q = state.currentQuestions[state.weakIndex];
+  const isCorrect = state.selectedAnswer === q.answer;
+  document.querySelectorAll("#wq-choices .choice").forEach((el, i) => {
+    if (i === q.answer) el.classList.add("correct");
+    else if (i === state.selectedAnswer && !isCorrect) el.classList.add("incorrect");
+  });
+  document.getElementById("wq-exp-text").textContent = q.exp;
+  document.getElementById("wq-exp-point").textContent = "📌 " + q.point;
+  document.getElementById("wq-explanation").classList.add("show");
+  document.getElementById("wbtn-check").style.display = "none";
+  document.getElementById("wbtn-next").style.display = "inline-block";
+  if (isCorrect) {
+    state.weakQuestions = state.weakQuestions.filter(id => id !== q.id);
+    state.history[q.id] = "correct";
+    showToast("✅ 正解！苦手リストから削除しました");
+    state.streak++;
+  } else {
+    state.history[q.id] = "incorrect";
+    showToast("❌ もう一度復習しましょう");
+    state.streak = 0;
+  }
+  updateDashboard();
+  saveState();
+}
+
+function nextWeakQuestion() {
+  state.weakIndex++;
+  showWeakQuestion();
+}
+
+function renderWeakTab() {
+  const list = document.getElementById("weak-items-list");
+  const empty = document.getElementById("weak-empty");
+  const startBtn = document.getElementById("weak-start-btn-area");
+  if (state.weakQuestions.length === 0) {
+    empty.style.display = "block";
+    list.innerHTML = "";
+    if (startBtn) startBtn.style.display = "none";
+  } else {
+    empty.style.display = "none";
+    if (startBtn) startBtn.style.display = "block";
+    const weakQs = QUESTIONS.filter(q => state.weakQuestions.includes(q.id));
+    list.innerHTML = weakQs.map(q =>
+      `<div class="weak-item">
+        <span style="color:var(--red);font-weight:700">⚑</span>　${q.cat}　${q.text.substring(0, 25)}...
+        <button onclick="removeWeak(${q.id})" style="float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">削除</button>
+      </div>`
+    ).join("");
+  }
+}
+
+function removeWeak(id) {
+  state.weakQuestions = state.weakQuestions.filter(wid => wid !== id);
+  updateDashboard();
+  saveState();
+  renderWeakTab();
+  showToast("苦手リストから削除しました");
+}
+
+// ===== チェックリスト =====
+let checks = {};
+function getChecks() { return checks; }
+function setChecks(c) { checks = c || {}; }
+
+function renderChecklist() {
+  const el = document.getElementById("checklist");
+  el.innerHTML = CHECKLIST.map(item =>
+    `<label class="check-item ${checks[item.id] ? "checked" : ""}" id="check-item-${item.id}">
+      <input type="checkbox" ${checks[item.id] ? "checked" : ""} onchange="toggleCheck(${item.id}, this)">
+      <span>${item.text}</span>
+      <span class="check-cat">${item.cat}</span>
+    </label>`
+  ).join("");
+  document.getElementById("check-total").textContent = CHECKLIST.length;
+  updateCheckProgress();
+}
+
+function toggleCheck(id, el) {
+  checks[id] = el.checked;
+  const item = document.getElementById("check-item-" + id);
+  if (el.checked) item.classList.add("checked");
+  else item.classList.remove("checked");
+  updateCheckProgress();
+  saveState();
+}
+
+function updateCheckProgress() {
+  const done = Object.values(checks).filter(Boolean).length;
+  document.getElementById("check-progress").textContent = done;
+  const pct = CHECKLIST.length > 0 ? (done / CHECKLIST.length) * 100 : 0;
+  document.getElementById("check-progress-bar").style.width = pct + "%";
+}
+
+function resetChecks() {
+  if (!confirm("チェックをすべてリセットしますか？")) return;
+  checks = {};
+  renderChecklist();
+  saveState();
+}
+
+// ===== 初期化 =====
+loadState();
+renderCategories();
+updateDashboard();
+</script>
+</body>
+</html>
