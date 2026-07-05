@@ -78,12 +78,25 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
   .score-section{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+/* ===== 進捗ステッパー ===== */
+.fp-stepper{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px 14px;margin-bottom:24px;overflow-x:auto}
+.fp-stepper-track{display:flex;align-items:flex-start;gap:0;min-width:680px}
+.fp-step{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;text-decoration:none;color:var(--muted);padding:0 4px}
+.fp-step:not(:last-child)::after{content:"";position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0}
+.fp-step.done:not(:last-child)::after{background:var(--gold)}
+.fp-step-circle{width:28px;height:28px;border-radius:50%;background:var(--white);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;margin-bottom:6px}
+.fp-step.done .fp-step-circle{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.fp-step.current .fp-step-circle{background:var(--navy);border-color:var(--navy);color:var(--gold);box-shadow:0 0 0 4px rgba(26,39,68,.15)}
+.fp-step-label{font-size:10.5px;line-height:1.3;color:var(--muted);white-space:nowrap}
+.fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
+.fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
+.fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -238,6 +251,20 @@ document.addEventListener('DOMContentLoaded', function() {
   <p class="hero-sub">幼稚園から大学まで、公立・私立の選択で変わる教育費を一括試算</p>
 </div>
 <div class="main">
+  <div class="fp-stepper">
+    <div class="fp-stepper-track">
+      <span class="fp-step disabled"><span class="fp-step-circle">1</span><span class="fp-step-label">面談シート</span></span>
+      <a class="fp-step done" href="fpnavi_household_v2.html"><span class="fp-step-circle">✓</span><span class="fp-step-label">家計診断</span></a>
+      <a class="fp-step done" href="fpnavi_01_lifeplan_v2.html"><span class="fp-step-circle">✓</span><span class="fp-step-label">ライフプラン</span></a>
+      <span class="fp-step current"><span class="fp-step-circle">4</span><span class="fp-step-label">教育費</span></span>
+      <a class="fp-step" href="fpnavi_03_mortgage_v2.html"><span class="fp-step-circle">5</span><span class="fp-step-label">住宅ローン</span></a>
+      <a class="fp-step" href="fpnavi_02_insurance_v2.html"><span class="fp-step-circle">6</span><span class="fp-step-label">保険</span></a>
+      <a class="fp-step" href="fpnavi_08_nisa_v2.html"><span class="fp-step-circle">7</span><span class="fp-step-label">NISA</span></a>
+      <a class="fp-step" href="fpnavi_07_retirement_v2.html"><span class="fp-step-circle">8</span><span class="fp-step-label">老後</span></a>
+      <a class="fp-step" href="fpnavi_04_inheritance_v2.html"><span class="fp-step-circle">9</span><span class="fp-step-label">相続</span></a>
+      <a class="fp-step" href="fpnavi_report.html"><span class="fp-step-circle">10</span><span class="fp-step-label">提案書作成</span></a>
+    </div>
+  </div>
   <div class="section-title">お子さんの情報</div>
   <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc()"><span class="num" id="age-out">0歳</span></div>
   <div class="row detail-only"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
