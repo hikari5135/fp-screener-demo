@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>面談シート｜FPナビ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:40px 32px 36px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:28px;line-height:1.4;margin-bottom:8px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px}
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:500;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;font-weight:500}
+.field input[type=text],.field select{width:100%;border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:14px;font-family:"Noto Sans JP",sans-serif}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--muted);width:180px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--navy)}
+.row .num{font-size:13px;font-weight:700;color:var(--navy);width:100px;text-align:right;flex-shrink:0}
+.needs-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px}
+.needs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.need-chk{display:flex;align-items:center;gap:8px;background:var(--cream);border-radius:8px;padding:10px 12px}
+.need-chk input{width:16px;height:16px;accent-color:var(--navy)}
+.need-chk label{font-size:13px;color:var(--text)}
+.memo-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-top:20px}
+.memo-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:8px;font-weight:700}
+.memo-box textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px}
+.next-box{background:var(--navy);border-radius:14px;padding:26px 30px;margin-top:28px;text-align:center;color:#fff}
+.next-box p{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px}
+.btn-next{background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;padding:14px 36px;border:none;border-radius:8px;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
+.btn-next:hover{background:#b8973c}
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+@media(max-width:600px){.field-grid{grid-template-columns:1fr}}
+
+/* 進捗ステッパー */
+.fp-stepper{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px 14px;margin-bottom:24px;overflow-x:auto}
+.fp-stepper-track{display:flex;align-items:flex-start;gap:0;min-width:680px}
+.fp-step{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;text-decoration:none;color:var(--muted);padding:0 4px}
+.fp-step:not(:last-child)::after{content:"";position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0}
+.fp-step.done:not(:last-child)::after{background:var(--gold)}
+.fp-step-circle{width:28px;height:28px;border-radius:50%;background:var(--white);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;margin-bottom:6px}
+.fp-step.done .fp-step-circle{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.fp-step.current .fp-step-circle{background:var(--navy);border-color:var(--navy);color:var(--gold);box-shadow:0 0 0 4px rgba(26,39,68,.15)}
+.fp-step-label{font-size:10.5px;line-height:1.3;color:var(--muted);white-space:nowrap}
+.fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
+.fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 面談シート</div></div>
+</header>
+<div class="hero">
+  <div class="hero-badge">STEP 1 ／ HEARING SHEET</div>
+  <h1>面談<em>ヒアリング</em>シート</h1>
+  <p class="hero-sub">最初にお客様の基本情報を入力すると、以降の診断ツールに自動で引き継がれます</p>
+</div>
+<div class="main">
+
+  <div class="fp-stepper">
+    <div class="fp-stepper-track">
+      <span class="fp-step current"><span class="fp-step-circle">1</span><span class="fp-step-label">面談シート</span></span>
+      <a class="fp-step" href="fpnavi_household_v2.html"><span class="fp-step-circle">2</span><span class="fp-step-label">家計診断</span></a>
+      <a class="fp-step" href="fpnavi_01_lifeplan_v2.html"><span class="fp-step-circle">3</span><span class="fp-step-label">ライフプラン</span></a>
+      <a class="fp-step" href="fpnavi_06_education_v2.html"><span class="fp-step-circle">4</span><span class="fp-step-label">教育費</span></a>
+      <a class="fp-step" href="fpnavi_03_mortgage_v2.html"><span class="fp-step-circle">5</span><span class="fp-step-label">住宅ローン</span></a>
+      <a class="fp-step" href="fpnavi_02_insurance_v2.html"><span class="fp-step-circle">6</span><span class="fp-step-label">保険</span></a>
+      <a class="fp-step" href="fpnavi_08_nisa_v2.html"><span class="fp-step-circle">7</span><span class="fp-step-label">NISA</span></a>
+      <a class="fp-step" href="fpnavi_07_retirement_v2.html"><span class="fp-step-circle">8</span><span class="fp-step-label">老後</span></a>
+      <a class="fp-step" href="fpnavi_04_inheritance_v2.html"><span class="fp-step-circle">9</span><span class="fp-step-label">相続</span></a>
+      <a class="fp-step" href="fpnavi_report.html"><span class="fp-step-circle">10</span><span class="fp-step-label">提案書作成</span></a>
+    </div>
+  </div>
+
+  <div class="section-title">お客様の基本情報</div>
+  <div class="field-grid">
+    <div class="field"><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+    <div class="field"><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年7月6日"></div>
+    <div class="field">
+      <label>家族構成</label>
+      <select id="family">
+        <option value="single">独身</option>
+        <option value="couple">既婚・子なし</option>
+        <option value="family" selected>既婚・子あり</option>
+      </select>
+    </div>
+    <div class="field"><label>担当FP・事務所名（任意）</label><input type="text" id="fpNote" placeholder="例：阪本 光 FP／ひかりFP相談室"></div>
+  </div>
+
+  <div class="section-title">収支の概況</div>
+  <div class="row"><label>年齢</label><input type="range" min="20" max="70" step="1" value="40" id="age" oninput="updateOut()"><span class="num" id="age-out">40歳</span></div>
+  <div class="row"><label>年収（手取り・年間）</label><input type="range" min="100" max="2000" step="10" value="500" id="income" oninput="updateOut()"><span class="num" id="income-out">500万円</span></div>
+  <div class="row"><label>年間支出（概算）</label><input type="range" min="100" max="1500" step="10" value="350" id="expense" oninput="updateOut()"><span class="num" id="expense-out">350万円</span></div>
+  <div class="row"><label>現在の貯蓄・資産額</label><input type="range" min="0" max="5000" step="50" value="500" id="savings" oninput="updateOut()"><span class="num" id="savings-out">500万円</span></div>
+
+  <div class="section-title">相談したい内容</div>
+  <div class="needs-box">
+    <div style="font-size:12px;color:var(--muted)">今回の面談で特に確認したい項目にチェックしてください（複数選択可）</div>
+    <div class="needs-grid">
+      <div class="need-chk"><input type="checkbox" id="need-household" checked><label for="need-household">💰 家計の健全度</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-lifeplan" checked><label for="need-lifeplan">📊 ライフプラン全体</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-education"><label for="need-education">🎓 教育費</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-mortgage"><label for="need-mortgage">🏠 住宅ローン</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-insurance"><label for="need-insurance">🛡️ 保険の見直し</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-nisa"><label for="need-nisa">📈 NISA・資産運用</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-retirement"><label for="need-retirement">🏦 老後資金</label></div>
+      <div class="need-chk"><input type="checkbox" id="need-inheritance"><label for="need-inheritance">📜 相続・贈与</label></div>
+    </div>
+  </div>
+
+  <div class="memo-box">
+    <label>📝 事前ヒアリングメモ</label>
+    <textarea id="preMemo" placeholder="お客様の状況・気になっている点・過去の相談履歴など、自由に記入してください..."></textarea>
+  </div>
+
+  <div class="next-box">
+    <p>入力内容は自動保存され、次の診断ツールに引き継がれます</p>
+    <button class="btn-next" onclick="goNext()">この内容で家計診断へ進む →</button>
+  </div>
+
+  <div class="disclaimer">本シートは面談の効率化を目的とした情報整理ツールです。入力内容はお使いのブラウザ内にのみ保存され、外部には送信されません。</div>
+</div>
+<footer>FPナビ Life Planning Suite ／ 面談シート ― 投資助言ではありません © 2026</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+var FP_SHARED_KEY = 'fpnavi_shared_v2';
+
+function showToast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2800)}
+
+function updateOut(){
+  document.getElementById("age-out").textContent = document.getElementById("age").value + "歳";
+  document.getElementById("income-out").textContent = parseInt(document.getElementById("income").value).toLocaleString() + "万円";
+  document.getElementById("expense-out").textContent = parseInt(document.getElementById("expense").value).toLocaleString() + "万円";
+  document.getElementById("savings-out").textContent = parseInt(document.getElementById("savings").value).toLocaleString() + "万円";
+}
+
+function saveHearing(){
+  const data = {
+    clientName: document.getElementById("clientName").value,
+    age: document.getElementById("age").value,
+    income: document.getElementById("income").value,
+    expense: document.getElementById("expense").value,
+    savings: document.getElementById("savings").value,
+    family: document.getElementById("family").value
+  };
+  try {
+    const existing = JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}');
+    const merged = Object.assign({}, existing, data);
+    localStorage.setItem(FP_SHARED_KEY, JSON.stringify(merged));
+  } catch(e) {}
+
+  // 面談シート自体の記録も保存(メモ・チェック内容の保持用)
+  const hearingData = {
+    clientName: document.getElementById("clientName").value,
+    clientDate: document.getElementById("clientDate").value,
+    fpNote: document.getElementById("fpNote").value,
+    preMemo: document.getElementById("preMemo").value,
+    needs: {
+      household: document.getElementById("need-household").checked,
+      lifeplan: document.getElementById("need-lifeplan").checked,
+      education: document.getElementById("need-education").checked,
+      mortgage: document.getElementById("need-mortgage").checked,
+      insurance: document.getElementById("need-insurance").checked,
+      nisa: document.getElementById("need-nisa").checked,
+      retirement: document.getElementById("need-retirement").checked,
+      inheritance: document.getElementById("need-inheritance").checked
+    }
+  };
+  localStorage.setItem('fpnavi_hearing_v1', JSON.stringify(hearingData));
+}
+
+function goNext(){
+  saveHearing();
+  showToast("✅ 保存しました。家計診断へ移動します...");
+  setTimeout(()=>{ window.location.href = "fpnavi_household_v2.html"; }, 700);
+}
+
+// 前回保存分の復元
+(function loadSaved(){
+  try {
+    const d = JSON.parse(localStorage.getItem('fpnavi_hearing_v1') || '{}');
+    if (d.clientName) document.getElementById("clientName").value = d.clientName;
+    if (d.clientDate) document.getElementById("clientDate").value = d.clientDate;
+    if (d.fpNote) document.getElementById("fpNote").value = d.fpNote;
+    if (d.preMemo) document.getElementById("preMemo").value = d.preMemo;
+    const shared = JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}');
+    if (shared.age) document.getElementById("age").value = shared.age;
+    if (shared.income) document.getElementById("income").value = Math.min(shared.income, 2000);
+    if (shared.expense) document.getElementById("expense").value = Math.min(shared.expense, 1500);
+    if (shared.savings) document.getElementById("savings").value = Math.min(shared.savings, 5000);
+    if (shared.family) document.getElementById("family").value = shared.family;
+  } catch(e) {}
+  updateOut();
+})();
+</script>
+</body>
+</html>
