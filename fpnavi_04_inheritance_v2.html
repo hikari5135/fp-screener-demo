@@ -125,7 +125,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,.floating-status,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -152,6 +152,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
 .progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
 .progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
+/* ===== ここまで ===== */
+/* ===== フローティングステータス ===== */
+.floating-status{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:500;display:flex;gap:12px;align-items:center;border:1px solid rgba(200,169,110,.4)}
+.floating-status span{white-space:nowrap}
+.floating-status span:nth-child(2){color:var(--gold);font-weight:700}
+.floating-status span:nth-child(3){color:#5ec48a;font-weight:700}
+@media(max-width:600px){.floating-status{left:12px;right:12px;justify-content:space-between;font-size:10px;padding:8px 14px}}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -279,8 +286,36 @@ function updateProgressHero(stepIndex) {
   var perStep = meetingMinutes / TOTAL_STEPS;
   var remaining = Math.max(1, Math.round(perStep * remainingSteps));
   remEl.textContent = '残り約 ' + remaining + ' 分';
+
+  var fsStep = document.getElementById('fs-step');
+  var fsRem = document.getElementById('fs-remaining');
+  if (fsStep) fsStep.textContent = 'STEP ' + stepIndex + '/10';
+  if (fsRem) fsRem.textContent = '残り約' + remaining + '分';
 }
 document.addEventListener('DOMContentLoaded', function(){ updateProgressHero(9); });
+
+// ===== 入力完了率トラッキング =====
+var TRACKED_FIELDS = ['estate','heirs','spouse'];
+var touchedFields = new Set();
+
+function trackTouch(id) {
+  touchedFields.add(id);
+  updateCompletion();
+}
+
+function updateCompletion() {
+  var total = TRACKED_FIELDS.length;
+  var done = TRACKED_FIELDS.filter(function(id){ return touchedFields.has(id); }).length;
+  var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  var fillEl = document.getElementById('completion-fill');
+  var pctEl = document.getElementById('completion-pct');
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = '入力完了率 ' + pct + '%';
+  var fsEl = document.getElementById('fs-completion');
+  if (fsEl) fsEl.textContent = '入力' + pct + '%';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateCompletion(); });
+// ===== ここまで =====
 // ===== ここまで =====
 
 function exportPDF() {
@@ -358,6 +393,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="progress-hero-title">相続税診断</div>
     <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
     <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+    <div class="progress-hero-bar" style="margin-top:12px"><div class="progress-hero-fill" id="completion-fill" style="background:#5ec48a"></div></div>
+    <div class="progress-hero-meta"><span id="completion-pct">入力完了率 0%</span><span></span></div>
+  </div>
+
+  <div class="floating-status" id="floating-status">
+    <span id="fs-step">STEP 9/10</span>
+    <span id="fs-remaining">残り約--分</span>
+    <span id="fs-completion">入力0%</span>
   </div>
 
 <div class="score-section">
@@ -395,9 +438,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div class="section-title">遺産・相続人の情報を入力</div>
-<div class="row"><label>遺産総額（不動産・預貯金等）</label><input type="range" min="0" max="30000" step="500" value="5000" id="estate" oninput="calc()"><span class="num" id="estate-out">5,000万円</span></div>
-<div class="row"><label>法定相続人の数（配偶者含む）</label><input type="range" min="1" max="8" step="1" value="3" id="heirs" oninput="calc()"><span class="num" id="heirs-out">3人</span></div>
-<div class="row"><label>うち配偶者の有無</label><select id="spouse" onchange="calc()"><option value="yes">あり</option><option value="no">なし</option></select></div>
+<div class="row"><label>遺産総額（不動産・預貯金等）</label><input type="range" min="0" max="30000" step="500" value="5000" id="estate" oninput="calc();trackTouch('estate')"><span class="num" id="estate-out">5,000万円</span></div>
+<div class="row"><label>法定相続人の数（配偶者含む）</label><input type="range" min="1" max="8" step="1" value="3" id="heirs" oninput="calc();trackTouch('heirs')"><span class="num" id="heirs-out">3人</span></div>
+<div class="row"><label>うち配偶者の有無</label><select id="spouse" onchange="calc();trackTouch('spouse')"><option value="yes">あり</option><option value="no">なし</option></select></div>
 <div class="row detail-only"><label>死亡保険金（みなし相続財産）</label><input type="range" min="0" max="5000" step="100" value="0" id="insurance" oninput="calc()"><span class="num" id="insurance-out">0万円</span></div>
 <div class="row detail-only"><label>債務・葬儀費用</label><input type="range" min="0" max="3000" step="100" value="200" id="debt" oninput="calc()"><span class="num" id="debt-out">200万円</span></div>
 <div class="section-title">試算結果</div>
