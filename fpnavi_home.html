@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FPナビ ホーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--gold:#c8a96e;--cream:#f8f5ef;--white:#fff;--text:#1a2744;--muted:#6b7a99;--green:#2a7a4f;--green-light:#e8f5ee;--red:#c0392b;--border:#e2ddd5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.7}
+header{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.brand-name{font-family:"Noto Serif JP",serif;color:var(--gold);font-size:17px}
+.brand-sub{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.15em}
+.hero{background:linear-gradient(135deg,var(--navy),#243460);padding:36px 32px 30px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);color:var(--gold);font-size:10px;letter-spacing:.2em;padding:4px 14px;border-radius:20px;margin-bottom:12px}
+.hero h1{font-family:"Noto Serif JP",serif;color:#fff;font-size:26px;margin-bottom:6px}
+.hero-sub{color:rgba(255,255,255,.65);font-size:13px}
+.main{max-width:760px;margin:0 auto;padding:32px 24px 80px}
+.section-title{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:700;margin-bottom:12px;margin-top:32px;border-left:3px solid var(--gold);padding-left:10px;text-transform:uppercase}
+.section-title:first-child{margin-top:0}
+
+.today-box{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.today-item{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.today-item:last-child{border-bottom:none}
+.today-time{font-family:"Noto Serif JP",serif;font-weight:700;color:var(--navy);font-size:16px;width:64px;flex-shrink:0}
+.today-name{font-size:14px;color:var(--text);font-weight:500}
+.today-empty{padding:24px 18px;text-align:center;color:var(--muted);font-size:13px}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat-card-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.stat-card-num{font-family:"Noto Serif JP",serif;font-size:34px;font-weight:700;color:var(--navy)}
+.stat-card-unit{font-size:12px;color:var(--muted)}
+
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.recent-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.recent-item-date{font-size:11px;color:var(--muted)}
+.recent-empty{padding:20px;text-align:center;color:var(--muted);font-size:13px;background:var(--white);border:1px solid var(--border);border-radius:10px}
+
+.cta-box{background:var(--navy);border-radius:14px;padding:26px 28px;margin-top:32px;text-align:center;color:#fff}
+.cta-box p{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px}
+.btn-start{background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;padding:14px 32px;border:none;border-radius:8px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;text-decoration:none;display:inline-block}
+.btn-start:hover{background:#b8973c}
+
+.tool-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.tool-link{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center;text-decoration:none;color:var(--navy);font-size:12px;font-weight:500}
+.tool-link:hover{border-color:var(--gold);color:var(--navy)}
+
+footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ ホーム</div></div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">HOME</div>
+  <h1 id="today-date">-</h1>
+  <p class="hero-sub">今日の面談・今月の実績をまとめて確認できます</p>
+</div>
+
+<div class="main">
+
+  <div class="section-title">📅 今日の面談</div>
+  <div class="today-box" id="today-box"></div>
+
+  <div class="section-title">📊 今月の実績</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-label">面談件数</div>
+      <div class="stat-card-num" id="stat-meetings">0</div>
+      <div class="stat-card-unit">件</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">PDF作成</div>
+      <div class="stat-card-num" id="stat-pdfs">0</div>
+      <div class="stat-card-unit">件</div>
+    </div>
+  </div>
+
+  <div class="section-title">🕓 最近の顧客</div>
+  <div class="recent-list" id="recent-list"></div>
+
+  <div class="section-title">🔗 診断ツールへ</div>
+  <div class="tool-links">
+    <a class="tool-link" href="fpnavi_household_v2.html">家計診断</a>
+    <a class="tool-link" href="fpnavi_01_lifeplan_v2.html">ライフプラン</a>
+    <a class="tool-link" href="fpnavi_06_education_v2.html">教育費</a>
+    <a class="tool-link" href="fpnavi_03_mortgage_v2.html">住宅ローン</a>
+    <a class="tool-link" href="fpnavi_02_insurance_v2.html">保険</a>
+    <a class="tool-link" href="fpnavi_08_nisa_v2.html">NISA</a>
+    <a class="tool-link" href="fpnavi_07_retirement_v2.html">老後資金</a>
+    <a class="tool-link" href="fpnavi_04_inheritance_v2.html">相続税</a>
+    <a class="tool-link" href="fpnavi_report.html">提案書作成</a>
+  </div>
+
+  <div class="cta-box">
+    <p>新しいお客様との面談を始めますか？</p>
+    <a class="btn-start" href="fpnavi_00_hearing.html">面談シートから始める →</a>
+  </div>
+
+</div>
+<footer>FPナビ Life Planning Suite ／ ホーム © 2026</footer>
+
+<script>
+const LOG_KEY = 'fpnavi_activity_log';
+
+function getLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function fmtDate(d) {
+  return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
+}
+
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function isSameMonth(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth();
+}
+
+function render() {
+  const now = new Date();
+  document.getElementById('today-date').textContent = fmtDate(now);
+
+  const log = getLog();
+
+  // 今日の面談
+  const todays = log.filter(e => e.type === 'meeting_started' && isSameDay(new Date(e.timestamp), now));
+  const todayBox = document.getElementById('today-box');
+  if (todays.length === 0) {
+    todayBox.innerHTML = '<div class="today-empty">本日の面談記録はまだありません</div>';
+  } else {
+    todayBox.innerHTML = todays.map(e => `
+      <div class="today-item">
+        <div class="today-time">${fmtTime(e.timestamp)}</div>
+        <div class="today-name">${e.clientName || '未入力'} 様</div>
+      </div>`).join('');
+  }
+
+  // 今月の実績
+  const meetingsThisMonth = log.filter(e => e.type === 'meeting_started' && isSameMonth(new Date(e.timestamp), now)).length;
+  const pdfsThisMonth = log.filter(e => e.type === 'pdf_created' && isSameMonth(new Date(e.timestamp), now)).length;
+  document.getElementById('stat-meetings').textContent = meetingsThisMonth;
+  document.getElementById('stat-pdfs').textContent = pdfsThisMonth;
+
+  // 最近の顧客（重複除去・新しい順）
+  const seen = new Set();
+  const recent = [];
+  for (let i = log.length - 1; i >= 0 && recent.length < 5; i--) {
+    const e = log[i];
+    const name = e.clientName || '未入力';
+    if (!seen.has(name)) {
+      seen.add(name);
+      recent.push(e);
+    }
+  }
+  const recentList = document.getElementById('recent-list');
+  if (recent.length === 0) {
+    recentList.innerHTML = '<div class="recent-empty">まだ記録がありません</div>';
+  } else {
+    recentList.innerHTML = recent.map(e => `
+      <div class="recent-item">
+        <span class="recent-item-name">${e.clientName || '未入力'} 様</span>
+        <span class="recent-item-date">${fmtDate(new Date(e.timestamp))}</span>
+      </div>`).join('');
+  }
+}
+
+render();
+</script>
+</body>
+</html>
