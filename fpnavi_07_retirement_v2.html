@@ -81,7 +81,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,.floating-status,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -108,6 +108,13 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
 .progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
 .progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
+/* ===== ここまで ===== */
+/* ===== フローティングステータス ===== */
+.floating-status{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:500;display:flex;gap:12px;align-items:center;border:1px solid rgba(200,169,110,.4)}
+.floating-status span{white-space:nowrap}
+.floating-status span:nth-child(2){color:var(--gold);font-weight:700}
+.floating-status span:nth-child(3){color:#5ec48a;font-weight:700}
+@media(max-width:600px){.floating-status{left:12px;right:12px;justify-content:space-between;font-size:10px;padding:8px 14px}}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -286,6 +293,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="progress-hero-title">老後資金診断</div>
     <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
     <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+    <div class="progress-hero-bar" style="margin-top:12px"><div class="progress-hero-fill" id="completion-fill" style="background:#5ec48a"></div></div>
+    <div class="progress-hero-meta"><span id="completion-pct">入力完了率 0%</span><span></span></div>
+  </div>
+
+  <div class="floating-status" id="floating-status">
+    <span id="fs-step">STEP 8/10</span>
+    <span id="fs-remaining">残り約--分</span>
+    <span id="fs-completion">入力0%</span>
   </div>
 
   <div class="section-title">試算結果</div>
@@ -298,17 +313,17 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 
   <div class="section-title">基本情報</div>
-  <div class="row"><label>現在の年齢</label><input type="range" min="20" max="65" step="1" value="45" id="age" oninput="calc()"><span class="num" id="age-out">45歳</span></div>
-  <div class="row"><label>退職予定年齢</label><input type="range" min="55" max="70" step="1" value="65" id="retire" oninput="calc()"><span class="num" id="retire-out">65歳</span></div>
+  <div class="row"><label>現在の年齢</label><input type="range" min="20" max="65" step="1" value="45" id="age" oninput="calc();trackTouch('age')"><span class="num" id="age-out">45歳</span></div>
+  <div class="row"><label>退職予定年齢</label><input type="range" min="55" max="70" step="1" value="65" id="retire" oninput="calc();trackTouch('retire')"><span class="num" id="retire-out">65歳</span></div>
   <div class="row detail-only"><label>想定寿命</label><input type="range" min="75" max="100" step="1" value="90" id="life" oninput="calc()"><span class="num" id="life-out">90歳</span></div>
-  <div class="row"><label>現在の貯蓄・投資資産</label><input type="range" min="0" max="5000" step="100" value="500" id="assets" oninput="calc()"><span class="num" id="assets-out">500万円</span></div>
-  <div class="row"><label>退職金（見込み）</label><input type="range" min="0" max="3000" step="100" value="500" id="severance" oninput="calc()"><span class="num" id="severance-out">500万円</span></div>
+  <div class="row"><label>現在の貯蓄・投資資産</label><input type="range" min="0" max="5000" step="100" value="500" id="assets" oninput="calc();trackTouch('assets')"><span class="num" id="assets-out">500万円</span></div>
+  <div class="row"><label>退職金（見込み）</label><input type="range" min="0" max="3000" step="100" value="500" id="severance" oninput="calc();trackTouch('severance')"><span class="num" id="severance-out">500万円</span></div>
   <div class="row detail-only"><label>運用利回り（退職後）</label><input type="range" min="0" max="4" step="0.1" value="1" id="rate" oninput="calc()"><span class="num" id="rate-out">1.0%</span></div>
 
   <div class="section-title">老後の収入・支出</div>
-  <div class="row"><label>月々の生活費（老後）</label><input type="range" min="10" max="50" step="1" value="25" id="expense" oninput="calc()"><span class="num" id="expense-out">25万円</span></div>
-  <div class="row"><label>公的年金の受給見込み（月）</label><input type="range" min="5" max="30" step="1" value="15" id="pension" oninput="calc()"><span class="num" id="pension-out">15万円</span></div>
-  <div class="row"><label>その他収入（月・パート等）</label><input type="range" min="0" max="20" step="1" value="0" id="other" oninput="calc()"><span class="num" id="other-out">0万円</span></div>
+  <div class="row"><label>月々の生活費（老後）</label><input type="range" min="10" max="50" step="1" value="25" id="expense" oninput="calc();trackTouch('expense')"><span class="num" id="expense-out">25万円</span></div>
+  <div class="row"><label>公的年金の受給見込み（月）</label><input type="range" min="5" max="30" step="1" value="15" id="pension" oninput="calc();trackTouch('pension')"><span class="num" id="pension-out">15万円</span></div>
+  <div class="row"><label>その他収入（月・パート等）</label><input type="range" min="0" max="20" step="1" value="0" id="other" oninput="calc();trackTouch('other')"><span class="num" id="other-out">0万円</span></div>
 
   <div class="section-title">退職後のキャッシュフロー（5年ごと）</div>
   <table class="cashflow-table">
@@ -447,8 +462,36 @@ function updateProgressHero(stepIndex) {
   var perStep = meetingMinutes / TOTAL_STEPS;
   var remaining = Math.max(1, Math.round(perStep * remainingSteps));
   remEl.textContent = '残り約 ' + remaining + ' 分';
+
+  var fsStep = document.getElementById('fs-step');
+  var fsRem = document.getElementById('fs-remaining');
+  if (fsStep) fsStep.textContent = 'STEP ' + stepIndex + '/10';
+  if (fsRem) fsRem.textContent = '残り約' + remaining + '分';
 }
 updateProgressHero(8);
+
+// ===== 入力完了率トラッキング =====
+var TRACKED_FIELDS = ['age','retire','assets','severance','expense','pension','other'];
+var touchedFields = new Set();
+
+function trackTouch(id) {
+  touchedFields.add(id);
+  updateCompletion();
+}
+
+function updateCompletion() {
+  var total = TRACKED_FIELDS.length;
+  var done = TRACKED_FIELDS.filter(function(id){ return touchedFields.has(id); }).length;
+  var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  var fillEl = document.getElementById('completion-fill');
+  var pctEl = document.getElementById('completion-pct');
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = '入力完了率 ' + pct + '%';
+  var fsEl = document.getElementById('fs-completion');
+  if (fsEl) fsEl.textContent = '入力' + pct + '%';
+}
+updateCompletion();
+// ===== ここまで =====
 </script>
 </body>
 </html>
