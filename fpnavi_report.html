@@ -125,7 +125,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 
 /* PDF印刷最適化 */
 @media print{
-  header,.header-btns,footer,.toast,.info-field input,.score-card-input,.memo-box textarea,.ai-edit-btn,.ai-editor,.btn-pdf,.btn-print,.btn-reset,.fp-stepper{display:none!important}
+  header,.header-btns,footer,.toast,.info-field input,.score-card-input,.memo-box textarea,.ai-edit-btn,.ai-editor,.btn-pdf,.btn-print,.btn-reset,.fp-stepper,.stage-nav,.pdf-stage-box{display:none!important}
   body{background:#fff;font-size:11px}
   .main{padding:0;max-width:100%}
   .total-score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -161,6 +161,15 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 段階ナビ ===== */
+.stage-nav{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.stage-nav a{flex:1;min-width:150px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center;text-decoration:none;color:var(--navy);font-size:12px;font-weight:700;transition:all .2s}
+.stage-nav a:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(200,169,110,.2);transform:translateY(-1px)}
+.stage-nav a span{display:block;font-size:10px;color:var(--muted);font-weight:500;margin-top:3px}
+.stage-title{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:700;margin:36px 0 14px;border-left:3px solid var(--gold);padding-left:10px;text-transform:uppercase}
+.pdf-stage-box{background:var(--navy);border-radius:12px;padding:24px 28px;text-align:center;color:#fff;margin-bottom:20px}
+.pdf-stage-box p{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:16px}
 /* ===== ここまで ===== */
 </style>
 </head>
@@ -203,6 +212,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
     </div>
   </div>
 
+  <div class="stage-nav">
+    <a href="#stage-dashboard">📊 総合ダッシュボード<span>スコア・グラフ</span></a>
+    <a href="#stage-navi">💡 改善提案ナビ<span>AI診断・アクション</span></a>
+    <a href="#stage-pdf">📄 PDF出力<span>お客様にお渡し</span></a>
+  </div>
+
   <!-- FP・顧客情報入力 -->
   <div class="info-grid">
     <div class="info-box">
@@ -220,6 +235,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   </div>
 
   <!-- 総合スコア -->
+  <div class="stage-title" id="stage-dashboard">📊 総合ダッシュボード</div>
   <div class="total-score-section">
     <div class="total-score-header">
       <div class="total-score-left">
@@ -239,6 +255,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   <div class="scores-grid" id="scores-grid"></div>
 
   <!-- AI総合コメント -->
+  <div class="stage-title" id="stage-navi">💡 改善提案ナビ</div>
   <div class="ai-total">
     <div class="ai-total-icon">🤖 FPナビ AI総合診断</div>
     <div class="ai-total-name">
@@ -271,6 +288,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   <div class="memo-box">
     <div class="memo-title">📝 担当FPメモ・次回確認事項</div>
     <textarea id="fpMemo" placeholder="次回面談までの宿題・確認事項・顧客の反応など..."></textarea>
+  </div>
+
+  <!-- PDF出力 -->
+  <div class="stage-title" id="stage-pdf">📄 PDF出力</div>
+  <div class="pdf-stage-box">
+    <p>ここまでの内容をPDFにまとめて、お客様にそのままお渡しできます。</p>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDFを出力する</button>
   </div>
 
   <!-- 面談履歴 -->
