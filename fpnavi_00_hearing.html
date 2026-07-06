@@ -97,6 +97,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
       </select>
     </div>
     <div class="field"><label>担当FP・事務所名（任意）</label><input type="text" id="fpNote" placeholder="例：阪本 光 FP／ひかりFP相談室"></div>
+    <div class="field"><label>本日の面談予定時間（分）</label><input type="text" id="meetingMinutes" placeholder="例：60" value="60"></div>
   </div>
 
   <div class="section-title">収支の概況</div>
@@ -154,7 +155,8 @@ function saveHearing(){
     income: document.getElementById("income").value,
     expense: document.getElementById("expense").value,
     savings: document.getElementById("savings").value,
-    family: document.getElementById("family").value
+    family: document.getElementById("family").value,
+    meetingMinutes: document.getElementById("meetingMinutes").value || 60
   };
   try {
     const existing = JSON.parse(localStorage.getItem(FP_SHARED_KEY) || '{}');
@@ -182,8 +184,20 @@ function saveHearing(){
   localStorage.setItem('fpnavi_hearing_v1', JSON.stringify(hearingData));
 }
 
+// ===== 活動ログ =====
+function logActivity(type, meta) {
+  try {
+    var key = 'fpnavi_activity_log';
+    var log = JSON.parse(localStorage.getItem(key) || '[]');
+    log.push(Object.assign({ type: type, timestamp: Date.now() }, meta || {}));
+    if (log.length > 500) log = log.slice(log.length - 500);
+    localStorage.setItem(key, JSON.stringify(log));
+  } catch(e) {}
+}
+
 function goNext(){
   saveHearing();
+  logActivity('meeting_started', { clientName: document.getElementById("clientName").value });
   showToast("✅ 保存しました。家計診断へ移動します...");
   setTimeout(()=>{ window.location.href = "fpnavi_household_v2.html"; }, 700);
 }
