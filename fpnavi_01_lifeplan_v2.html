@@ -100,7 +100,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -119,6 +119,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style><script>
 
@@ -229,6 +237,26 @@ function getAITonePrefix() {
   return map[tone] || '';
 }
 
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateProgressHero(3); });
+// ===== ここまで =====
+
 function exportPDF() {
   var name = document.getElementById('clientName') ? document.getElementById('clientName').value : 'FPナビ診断';
   var cn = document.getElementById('pdf-client-name');
@@ -297,6 +325,32 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 3 ／ 10</div>
+    <div class="progress-hero-title">ライフプラン診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <div class="score-section">
+    <div class="score-header">
+      <div>
+        <div class="score-label">ライフプランスコア</div>
+        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
+        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
+        <div class="score-rank" id="score-rank">診断中</div>
+      </div>
+      <div class="score-breakdown" id="score-breakdown"></div>
+    </div>
+  </div>
+
+  <div class="ai-comment">
+    <div class="ai-icon">🤖 FPナビ AI診断</div>
+    <div class="ai-name">ライフプランアドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
+    <div class="ai-text" id="ai-text">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
+  </div>
+
   <div class="mode-switch">
     <button class="mode-btn active" onclick="setMode('simple',this)">⚡ 簡易3分モード</button>
     <button class="mode-btn" onclick="setMode('detail',this)">🔍 詳細30分モード</button>
@@ -331,25 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="row detail-only"><label>想定運用利回り</label><input type="range" min="0" max="5" step="0.1" value="2" id="rate" oninput="calc()"><span class="num" id="rate-out">2.0%</span></div>
   <div class="row detail-only"><label>老後の年間支出</label><input type="range" min="100" max="500" step="10" value="240" id="retire-exp" oninput="calc()"><span class="num" id="retire-exp-out">240万円</span></div>
   <div class="row detail-only"><label>年金受給見込み（年）</label><input type="range" min="0" max="300" step="10" value="150" id="pension" oninput="calc()"><span class="num" id="pension-out">150万円</span></div>
-
-  <div class="score-section">
-    <div class="score-header">
-      <div>
-        <div class="score-label">ライフプランスコア</div>
-        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
-        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
-        <div class="score-rank" id="score-rank">診断中</div>
-      </div>
-      <div class="score-breakdown" id="score-breakdown"></div>
-    </div>
-  </div>
-
-  <div class="ai-comment">
-    <div class="ai-icon">🤖 FPナビ AI診断</div>
-    <div class="ai-name">ライフプランアドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
-    <div class="ai-text" id="ai-text">入力データを分析中...</div>
-    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
-  </div>
 
   <div class="section-title">試算結果</div>
   <div class="cards">
@@ -394,7 +429,7 @@ function saveData(){
   const s=getSaves();
   s[key]={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value,age:document.getElementById("age").value,income:document.getElementById("income").value,expense:document.getElementById("expense").value,savings:document.getElementById("savings").value,rate:document.getElementById("rate").value,retireExp:document.getElementById("retire-exp").value,pension:document.getElementById("pension").value};
   localStorage.setItem(SK,JSON.stringify(s));
-  const sh=JSON.parse(localStorage.getItem("fp_shared")||"{}");sh.income=document.getElementById("income").value;sh.expense=document.getElementById("expense").value;sh.savings=document.getElementById("savings").value;sh.age=document.getElementById("age").value;localStorage.setItem("fp_shared",JSON.stringify(sh));
+  const sh=JSON.parse(localStorage.getItem(FP_SHARED_KEY)||"{}");sh.income=document.getElementById("income").value;sh.expense=document.getElementById("expense").value;sh.savings=document.getElementById("savings").value;sh.age=document.getElementById("age").value;sh.clientName=document.getElementById("clientName").value;localStorage.setItem(FP_SHARED_KEY,JSON.stringify(sh));
   refreshList();showToast("✅ 保存しました："+key);
 }
 function loadSelected(){const key=document.getElementById("savedList").value;if(!key)return;const d=getSaves()[key];if(!d)return;document.getElementById("clientName").value=d.clientName||"";document.getElementById("clientDate").value=d.clientDate||"";document.getElementById("fpMemo").value=d.fpMemo||"";document.getElementById("age").value=d.age;document.getElementById("income").value=d.income;document.getElementById("expense").value=d.expense;document.getElementById("savings").value=d.savings;document.getElementById("rate").value=d.rate;document.getElementById("retire-exp").value=d.retireExp;document.getElementById("pension").value=d.pension;calc();showToast("📂 読み込みました："+key)}
@@ -466,13 +501,14 @@ function calc(){
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"資産残高",data,borderColor:"#1a2744",backgroundColor:"rgba(26,39,68,.07)",borderWidth:2,pointRadius:0,fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString()+"万円"}}},scales:{x:{ticks:{maxTicksLimit:10,color:"#6b7a99",font:{size:11}},grid:{color:"#e2ddd5"}},y:{ticks:{color:"#6b7a99",font:{size:11},callback:v=>v.toLocaleString()+"万"},grid:{color:"#e2ddd5"}}}}});
 }
 refreshList();
-const sh=JSON.parse(localStorage.getItem("fp_shared")||"{}");
+const sh=JSON.parse(localStorage.getItem(FP_SHARED_KEY)||"{}");
 if(sh.income)document.getElementById("income").value=sh.income;
 if(sh.expense)document.getElementById("expense").value=sh.expense;
 if(sh.savings)document.getElementById("savings").value=sh.savings;
 if(sh.age)document.getElementById("age").value=sh.age;
+if(sh.clientName)document.getElementById("clientName").value=sh.clientName;
 calc();
 </script><script>
-fpSharedShowBanner(["age", "income", "expense", "savings"]);
+fpSharedShowBanner(["clientName", "age", "income", "expense", "savings"]);
 </script>
 </body></html>
