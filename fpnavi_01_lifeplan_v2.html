@@ -276,7 +276,9 @@ var touchedFields = new Set();
 function trackTouch(id) {
   touchedFields.add(id);
   updateCompletion();
-}function updateCompletion() {
+}
+
+function updateCompletion() {
   var total = TRACKED_FIELDS.length;
   var done = TRACKED_FIELDS.filter(function(id){ return touchedFields.has(id); }).length;
   var pct = total > 0 ? Math.round((done / total) * 100) : 0;
