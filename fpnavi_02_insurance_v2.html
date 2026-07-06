@@ -106,7 +106,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -125,6 +125,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -236,6 +244,26 @@ function getAITonePrefix() {
   return map[tone] || '';
 }
 
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateProgressHero(6); });
+// ===== ここまで =====
+
 function exportPDF() {
   var name = document.getElementById('clientName') ? document.getElementById('clientName').value : 'FPナビ診断';
   var cn = document.getElementById('pdf-client-name');
@@ -272,6 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <header>
   <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 保険見直し診断</div></div>
   <div class="header-btns">
+    <a href="fpnavi_home.html" class="btn-print" style="text-decoration:none;display:inline-block">🏠 ホーム</a>
     <button class="btn-save" onclick="saveData()">💾 保存</button>
     <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF出力</button>
@@ -303,6 +332,31 @@ document.addEventListener('DOMContentLoaded', function() {
       <a class="fp-step" href="fpnavi_04_inheritance_v2.html"><span class="fp-step-circle">9</span><span class="fp-step-label">相続</span></a>
       <a class="fp-step" href="fpnavi_report.html"><span class="fp-step-circle">10</span><span class="fp-step-label">提案書作成</span></a>
     </div>
+  </div>
+
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 6 ／ 10</div>
+    <div class="progress-hero-title">保険最適化診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <div class="score-section">
+    <div class="score-header">
+      <div>
+        <div class="score-label">保険カバレッジスコア</div>
+        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
+        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
+        <div class="score-rank" id="score-rank">診断中</div>
+      </div>
+      <div class="score-breakdown" id="score-breakdown"></div>
+    </div>
+  </div>
+  <div class="ai-comment">
+    <div class="ai-icon">🤖 FPナビ AI診断</div>
+    <div class="ai-name">保険アドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
+    <div class="ai-text" id="ai-text">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
   </div>
 
   
@@ -350,23 +404,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="chk-row"><input type="checkbox" id="hasIncome" onchange="calc()"><label for="hasIncome">就業不能保険（収入保障）に加入している</label></div>
   <div class="chk-row"><input type="checkbox" id="hasLong" onchange="calc()"><label for="hasLong">介護保険（民間）に加入している</label></div>
 
-  <div class="score-section">
-    <div class="score-header">
-      <div>
-        <div class="score-label">保険カバレッジスコア</div>
-        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
-        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
-        <div class="score-rank" id="score-rank">診断中</div>
-      </div>
-      <div class="score-breakdown" id="score-breakdown"></div>
-    </div>
-  </div>
-  <div class="ai-comment">
-    <div class="ai-icon">🤖 FPナビ AI診断</div>
-    <div class="ai-name">保険アドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
-    <div class="ai-text" id="ai-text">入力データを分析中...</div>
-    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
-  </div>
   <div class="section-title">保障内容の診断結果</div>
   <div id="result-items"></div>
   <div class="advice-box">
@@ -418,7 +455,8 @@ function loadSelected(){
   calc();showToast("📂 読み込みました："+key);
 }
 function deleteSelected(){const key=document.getElementById("savedList").value;if(!key)return;if(!confirm(key+" を削除しますか？"))return;const s=getSaves();delete s[key];localStorage.setItem(SK,JSON.stringify(s));refreshList();showToast("🗑️ 削除しました")}
-function exportPDF(){const name=document.getElementById("clientName").value||"保険診断";const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_保険見直し診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("✅ PDF出力完了"))}
+function logActivity(type,meta){try{var key='fpnavi_activity_log';var log=JSON.parse(localStorage.getItem(key)||'[]');log.push(Object.assign({type:type,timestamp:Date.now()},meta||{}));if(log.length>500)log=log.slice(log.length-500);localStorage.setItem(key,JSON.stringify(log));}catch(e){}}
+function exportPDF(){const name=document.getElementById("clientName").value||"保険診断";const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_保険見直し診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>{logActivity('pdf_created',{clientName:document.getElementById("clientName").value});showToast("✅ PDF出力完了");})}
 function gc(s){return s>=80?"#2a7a4f":s>=60?"#f39c12":"#c0392b"}
 function calc(){
   const age=parseInt(document.getElementById("age").value);
@@ -476,7 +514,7 @@ function calc(){
 refreshList();calc();
 </script>
 <script>
-fpSharedShowBanner(["age", "income", "family"]);
+fpSharedShowBanner(["clientName", "age", "income", "family"]);
 </script>
 </body>
 </html>
