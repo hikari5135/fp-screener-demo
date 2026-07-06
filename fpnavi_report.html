@@ -595,6 +595,16 @@ function resetAll() {
   showToast('🔄 リセットしました');
 }
 
+function logActivity(type, meta) {
+  try {
+    var key = 'fpnavi_activity_log';
+    var log = JSON.parse(localStorage.getItem(key) || '[]');
+    log.push(Object.assign({ type: type, timestamp: Date.now() }, meta || {}));
+    if (log.length > 500) log = log.slice(log.length - 500);
+    localStorage.setItem(key, JSON.stringify(log));
+  } catch(e) {}
+}
+
 function exportPDF() {
   const name = document.getElementById('clientName').value || 'FP総合レポート';
   const el = document.getElementById('report-area');
@@ -607,7 +617,10 @@ function exportPDF() {
     pagebreak:{mode:['avoid-all','css','legacy']}
   };
   showToast('📄 PDF生成中...');
-  html2pdf().set(opt).from(el).save().then(() => showToast('✅ PDF出力完了'));
+  html2pdf().set(opt).from(el).save().then(() => {
+    logActivity('pdf_created', { clientName: document.getElementById('clientName').value });
+    showToast('✅ PDF出力完了');
+  });
 }
 
 // 共有データから引き継ぎ
