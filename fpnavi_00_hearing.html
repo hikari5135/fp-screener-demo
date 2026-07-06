@@ -35,10 +35,23 @@ header{background:var(--navy);padding:0 32px;display:flex;align-items:center;jus
 .memo-box{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-top:20px}
 .memo-box label{font-size:12px;color:var(--muted);display:block;margin-bottom:8px;font-weight:700}
 .memo-box textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:"Noto Sans JP",sans-serif;resize:vertical;min-height:80px}
-.next-box{background:var(--navy);border-radius:14px;padding:26px 30px;margin-top:28px;text-align:center;color:#fff}
-.next-box p{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px}
-.btn-next{background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;padding:14px 36px;border:none;border-radius:8px;cursor:pointer;font-family:"Noto Sans JP",sans-serif}
-.btn-next:hover{background:#b8973c}
+.next-box{background:linear-gradient(135deg,var(--navy),#243460);border-radius:16px;padding:36px 30px;margin-top:32px;text-align:center;color:#fff;box-shadow:0 10px 30px rgba(26,39,68,.25)}
+.next-box-check{font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.1em;margin-bottom:10px}
+.next-box-arrow{font-size:22px;color:var(--gold);margin:8px 0}
+.next-box p{font-size:14px;color:rgba(255,255,255,.75);margin-bottom:20px}
+.btn-next{background:var(--gold);color:var(--navy);font-weight:700;font-size:18px;padding:18px 48px;border:none;border-radius:10px;cursor:pointer;font-family:"Noto Sans JP",sans-serif;box-shadow:0 6px 18px rgba(200,169,110,.4);transition:transform .15s}
+.btn-next:hover{background:#b8973c;transform:translateY(-2px)}
+/* ===== フローティングステータス ===== */
+.floating-status{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:500;display:flex;gap:12px;align-items:center;border:1px solid rgba(200,169,110,.4)}
+.floating-status span{white-space:nowrap}
+.floating-status span:nth-child(2){color:var(--gold);font-weight:700}
+.floating-status span:nth-child(3){color:#5ec48a;font-weight:700}
+@media(max-width:600px){.floating-status{left:12px;right:12px;justify-content:space-between;font-size:10px;padding:8px 14px}}
+/* ===== 進捗ヒーロー(完了率) ===== */
+.progress-hero{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:20px}
+.progress-hero-bar{background:var(--cream);border-radius:6px;height:8px;overflow:hidden;margin-bottom:8px}
+.progress-hero-fill{background:#5ec48a;height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .disclaimer{font-size:11px;color:var(--muted);line-height:1.8;margin-top:24px;padding:16px;background:var(--white);border-radius:8px;border:1px solid var(--border)}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;display:none}
 footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:16px}
@@ -85,13 +98,24 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="completion-fill"></div></div>
+    <div class="progress-hero-meta"><span id="completion-pct">入力完了率 0%</span><span></span></div>
+  </div>
+
+  <div class="floating-status" id="floating-status">
+    <span id="fs-step">STEP 1/10</span>
+    <span id="fs-remaining">残り約--分</span>
+    <span id="fs-completion">入力0%</span>
+  </div>
+
   <div class="section-title">お客様の基本情報</div>
   <div class="field-grid">
-    <div class="field"><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様"></div>
+    <div class="field"><label>顧客名</label><input type="text" id="clientName" placeholder="例：山田 太郎 様" oninput="trackTouch('clientName')"></div>
     <div class="field"><label>面談日</label><input type="text" id="clientDate" placeholder="例：2026年7月6日"></div>
     <div class="field">
       <label>家族構成</label>
-      <select id="family">
+      <select id="family" onchange="trackTouch('family')">
         <option value="single">独身</option>
         <option value="couple">既婚・子なし</option>
         <option value="family" selected>既婚・子あり</option>
@@ -102,10 +126,10 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   </div>
 
   <div class="section-title">収支の概況</div>
-  <div class="row"><label>年齢</label><input type="range" min="20" max="70" step="1" value="40" id="age" oninput="updateOut()"><span class="num" id="age-out">40歳</span></div>
-  <div class="row"><label>年収（手取り・年間）</label><input type="range" min="100" max="2000" step="10" value="500" id="income" oninput="updateOut()"><span class="num" id="income-out">500万円</span></div>
-  <div class="row"><label>年間支出（概算）</label><input type="range" min="100" max="1500" step="10" value="350" id="expense" oninput="updateOut()"><span class="num" id="expense-out">350万円</span></div>
-  <div class="row"><label>現在の貯蓄・資産額</label><input type="range" min="0" max="5000" step="50" value="500" id="savings" oninput="updateOut()"><span class="num" id="savings-out">500万円</span></div>
+  <div class="row"><label>年齢</label><input type="range" min="20" max="70" step="1" value="40" id="age" oninput="updateOut();trackTouch('age')"><span class="num" id="age-out">40歳</span></div>
+  <div class="row"><label>年収（手取り・年間）</label><input type="range" min="100" max="2000" step="10" value="500" id="income" oninput="updateOut();trackTouch('income')"><span class="num" id="income-out">500万円</span></div>
+  <div class="row"><label>年間支出（概算）</label><input type="range" min="100" max="1500" step="10" value="350" id="expense" oninput="updateOut();trackTouch('expense')"><span class="num" id="expense-out">350万円</span></div>
+  <div class="row"><label>現在の貯蓄・資産額</label><input type="range" min="0" max="5000" step="50" value="500" id="savings" oninput="updateOut();trackTouch('savings')"><span class="num" id="savings-out">500万円</span></div>
 
   <div class="section-title">相談したい内容</div>
   <div class="needs-box">
@@ -128,6 +152,8 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
   </div>
 
   <div class="next-box">
+    <div class="next-box-check">✔ 入力完了</div>
+    <div class="next-box-arrow">↓</div>
     <p>入力内容は自動保存され、次の診断ツールに引き継がれます</p>
     <button class="btn-next" onclick="goNext()">この内容で家計診断へ進む →</button>
   </div>
@@ -148,6 +174,41 @@ function updateOut(){
   document.getElementById("expense-out").textContent = parseInt(document.getElementById("expense").value).toLocaleString() + "万円";
   document.getElementById("savings-out").textContent = parseInt(document.getElementById("savings").value).toLocaleString() + "万円";
 }
+
+// ===== 入力完了率トラッキング =====
+var TRACKED_FIELDS = ['clientName','age','income','expense','savings','family'];
+var touchedFields = new Set();
+
+function trackTouch(id) {
+  touchedFields.add(id);
+  updateCompletion();
+}
+
+function updateCompletion() {
+  var total = TRACKED_FIELDS.length;
+  var done = TRACKED_FIELDS.filter(function(id){ return touchedFields.has(id); }).length;
+  var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  var fillEl = document.getElementById('completion-fill');
+  var pctEl = document.getElementById('completion-pct');
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = '入力完了率 ' + pct + '%';
+  var fsEl = document.getElementById('fs-completion');
+  if (fsEl) fsEl.textContent = '入力' + pct + '%';
+}
+
+function updateFloatingRemaining() {
+  var shared = {};
+  try { shared = JSON.parse(localStorage.getItem('fpnavi_shared_v2') || '{}'); } catch(e) {}
+  var meetingMinutes = parseInt(document.getElementById('meetingMinutes').value) || parseInt(shared.meetingMinutes) || 60;
+  var fsRem = document.getElementById('fs-remaining');
+  if (fsRem) fsRem.textContent = '残り約' + meetingMinutes + '分';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateCompletion(); updateFloatingRemaining(); });
+document.addEventListener('DOMContentLoaded', function(){
+  var mm = document.getElementById('meetingMinutes');
+  if (mm) mm.addEventListener('input', updateFloatingRemaining);
+});
+// ===== ここまで =====
 
 function saveHearing(){
   const data = {
