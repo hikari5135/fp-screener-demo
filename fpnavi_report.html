@@ -125,7 +125,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 
 /* PDF印刷最適化 */
 @media print{
-  header,.header-btns,footer,.toast,.info-field input,.score-card-input,.memo-box textarea,.ai-edit-btn,.ai-editor,.btn-pdf,.btn-print,.btn-reset,.fp-stepper,.stage-nav,.pdf-stage-box{display:none!important}
+  header,.header-btns,footer,.toast,.info-field input,.score-card-input,.memo-box textarea,.ai-edit-btn,.ai-editor,.btn-pdf,.btn-print,.btn-reset,.fp-stepper,.stage-nav,.pdf-stage-box,.floating-status{display:none!important}
   body{background:#fff;font-size:11px}
   .main{padding:0;max-width:100%}
   .total-score-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -171,6 +171,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-stage-box{background:var(--navy);border-radius:12px;padding:24px 28px;text-align:center;color:#fff;margin-bottom:20px}
 .pdf-stage-box p{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:16px}
 /* ===== ここまで ===== */
+/* ===== フローティングステータス ===== */
+.floating-status{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:500;display:flex;gap:12px;align-items:center;border:1px solid rgba(200,169,110,.4)}
+.floating-status span{white-space:nowrap}
+.floating-status span:nth-child(2){color:var(--gold);font-weight:700}
+.floating-status span:nth-child(3){color:#5ec48a;font-weight:700}
+@media(max-width:600px){.floating-status{left:12px;right:12px;justify-content:space-between;font-size:10px;padding:8px 14px}}
+/* ===== ここまで ===== */
 </style>
 </head>
 <body>
@@ -211,6 +218,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
       <a class="fp-step done" href="fpnavi_04_inheritance_v2.html"><span class="fp-step-circle">✓</span><span class="fp-step-label">相続</span></a>
       <span class="fp-step current"><span class="fp-step-circle">10</span><span class="fp-step-label">提案書作成</span></span>
     </div>
+  </div>
+
+  <div class="floating-status" id="floating-status">
+    <span id="fs-step">STEP 10/10</span>
+    <span id="fs-remaining">残り約--分</span>
+    <span id="fs-completion">入力0/8</span>
   </div>
 
   <div class="stage-nav">
@@ -378,6 +391,11 @@ function setScore(id, val) {
 }
 
 function updateAll() {
+  // フローティングバッジ更新
+  const filledCount = TOOLS.filter(t => scores[t.id] !== null && scores[t.id] !== undefined).length;
+  const fsEl = document.getElementById('fs-completion');
+  if (fsEl) fsEl.textContent = '入力' + filledCount + '/' + TOOLS.length;
+
   // 各カードを更新
   TOOLS.forEach(t => {
     const s = scores[t.id];
