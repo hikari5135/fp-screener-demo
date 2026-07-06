@@ -159,7 +159,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -178,6 +178,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -289,6 +297,26 @@ function getAITonePrefix() {
   return map[tone] || '';
 }
 
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateProgressHero(2); });
+// ===== ここまで =====
+
 function exportPDF() {
   var name = document.getElementById('clientName') ? document.getElementById('clientName').value : 'FPナビ診断';
   var cn = document.getElementById('pdf-client-name');
@@ -364,6 +392,34 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 2 ／ 10</div>
+    <div class="progress-hero-title">家計健全度診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-section" id="score-section">
+    <div class="score-header">
+      <div class="score-main">
+        <div class="score-label">家計健全度スコア</div>
+        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
+        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
+        <div class="score-rank" id="score-rank">診断中</div>
+      </div>
+      <div class="score-breakdown" id="score-breakdown"></div>
+    </div>
+  </div>
+
+  <!-- AI COMMENT -->
+  <div class="ai-comment" id="ai-comment">
+    <div class="ai-icon">🤖 FPナビ AI診断</div>
+    <div class="ai-name">家計アドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
+    <div class="ai-text" id="ai-text">入力データを分析中...</div>
+    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
+  </div>
+
   
   <div class="mode-switch">
     <button class="mode-btn active" onclick="setMode('simple',this)">⚡ 簡易3分モード</button>
@@ -410,27 +466,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="row detail-only"><label>交際費・娯楽費</label><input type="range" min="0" max="10" step="0.5" value="2" id="ent" oninput="calc()"><span class="num" id="ent-out">2.0万円</span></div>
   <div class="row detail-only"><label>その他支出</label><input type="range" min="0" max="10" step="0.5" value="2" id="other" oninput="calc()"><span class="num" id="other-out">2.0万円</span></div>
   <div class="row"><label>貯蓄・投資</label><input type="range" min="0" max="20" step="0.5" value="3" id="saving" oninput="calc()"><span class="num" id="saving-out">3.0万円</span></div>
-
-  <!-- SCORE -->
-  <div class="score-section" id="score-section">
-    <div class="score-header">
-      <div class="score-main">
-        <div class="score-label">家計健全度スコア</div>
-        <div><span class="score-num" id="total-score">0</span><span class="score-unit">点</span></div>
-        <div class="score-stars" id="score-stars">☆☆☆☆☆</div>
-        <div class="score-rank" id="score-rank">診断中</div>
-      </div>
-      <div class="score-breakdown" id="score-breakdown"></div>
-    </div>
-  </div>
-
-  <!-- AI COMMENT -->
-  <div class="ai-comment" id="ai-comment">
-    <div class="ai-icon">🤖 FPナビ AI診断</div>
-    <div class="ai-name">家計アドバイザー<button class="ai-edit-btn" onclick="toggleAIEdit()">✏️ 編集</button></div>
-    <div class="ai-text" id="ai-text">入力データを分析中...</div>
-    <textarea class="ai-editor" id="ai-editor" placeholder="コメントを編集..."></textarea>
-  </div>
 
   <!-- CHARTS -->
   <div class="charts-row">
@@ -504,9 +539,10 @@ function saveData(){
   const data={clientName:document.getElementById("clientName").value,clientDate:document.getElementById("clientDate").value,fpMemo:document.getElementById("fpMemo").value,income:document.getElementById("income").value,sub:document.getElementById("sub").value};
   ["housing","food","utility","comm","ins","edu","ent","other","saving"].forEach(id=>data[id]=document.getElementById(id).value);
   saves[key]=data;localStorage.setItem(STORAGE_KEY,JSON.stringify(saves));
-  const shared=JSON.parse(localStorage.getItem("fp_shared")||"{}");
+  const shared=JSON.parse(localStorage.getItem(FP_SHARED_KEY)||"{}");
   shared.income=Math.round((parseFloat(data.income)+parseFloat(data.sub))*12);
-  localStorage.setItem("fp_shared",JSON.stringify(shared));
+  shared.clientName=document.getElementById("clientName").value;
+  localStorage.setItem(FP_SHARED_KEY,JSON.stringify(shared));
   refreshList();showToast("✅ 保存しました："+key);
 }
 function loadSelected(){
@@ -688,15 +724,18 @@ function calc() {
 }
 
 refreshList();
-const shared = JSON.parse(localStorage.getItem("fp_shared")||"{}");
+const shared = JSON.parse(localStorage.getItem(FP_SHARED_KEY)||"{}");
 if(shared.income){
   const mi = Math.min(Math.round(shared.income/12), 100);
   document.getElementById("income").value = mi;
 }
+if(shared.clientName){
+  document.getElementById("clientName").value = shared.clientName;
+}
 calc();
 </script>
 <script>
-fpSharedShowBanner(["income"]);
+fpSharedShowBanner(["clientName", "income"]);
 </script>
 </body>
 </html>
