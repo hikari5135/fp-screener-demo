@@ -125,7 +125,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -144,6 +144,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);font-size:11px;text-ali
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -255,6 +263,26 @@ function getAITonePrefix() {
   return map[tone] || '';
 }
 
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+document.addEventListener('DOMContentLoaded', function(){ updateProgressHero(5); });
+// ===== ここまで =====
+
 function exportPDF() {
   var name = document.getElementById('clientName') ? document.getElementById('clientName').value : 'FPナビ診断';
   var cn = document.getElementById('pdf-client-name');
@@ -324,6 +352,19 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 5 ／ 10</div>
+    <div class="progress-hero-title">住宅ローン比較診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+<div class="score-section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div><div class="score-label-sm">診断スコア</div><div><span class="score-big" id="total-score">0</span><span class="score-unit">点</span></div><div class="score-stars" id="score-stars">☆☆☆☆☆</div><div class="score-rank" id="score-rank">診断中</div></div>
+    <div id="score-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;flex:1;max-width:520px"></div>
+  </div>
+</div><div class="ai-comment"><div class="ai-icon">FPナビ AI診断</div><div class="ai-text" id="ai-text" style="margin-top:12px">分析中...</div></div>
 
   <div class="mode-switch">
     <button class="mode-btn active" onclick="setMode('simple',this)">⚡ 簡易3分モード</button>
@@ -352,12 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div><label>保存データ</label><select id="savedList" onchange="loadSelected()"><option value="">-- 保存済みを選択 --</option></select><button class="btn-load" onclick="deleteSelected()">削除</button></div>
 </div>
 
-<div class="score-section">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
-    <div><div class="score-label-sm">診断スコア</div><div><span class="score-big" id="total-score">0</span><span class="score-unit">点</span></div><div class="score-stars" id="score-stars">☆☆☆☆☆</div><div class="score-rank" id="score-rank">診断中</div></div>
-    <div id="score-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;flex:1;max-width:520px"></div>
-  </div>
-</div><div class="ai-comment"><div class="ai-icon">FPナビ AI診断</div><div class="ai-text" id="ai-text" style="margin-top:12px">分析中...</div></div>
 <div class="section-title">基本条件を入力</div>
 <div class="row"><label>借入額</label><input type="range" min="500" max="8000" step="100" value="3000" id="amount" oninput="calc()"><span class="num" id="amount-out">3,000万円</span></div>
 <div class="row"><label>返済期間</label><input type="range" min="10" max="35" step="1" value="35" id="years" oninput="calc()"><span class="num" id="years-out">35年</span></div>
@@ -479,13 +514,14 @@ function calc(){
   chart03=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"変動金利",data:b1,borderColor:"#1a2744",backgroundColor:"rgba(26,39,68,.06)",borderWidth:2,pointRadius:0,fill:true,tension:.2},{label:"固定金利",data:b2,borderColor:"#c8a96e",backgroundColor:"rgba(200,169,110,.06)",borderWidth:2,pointRadius:0,fill:true,tension:.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+": "+ctx.parsed.y.toLocaleString()+"万円"}}},scales:{x:{ticks:{maxTicksLimit:8,color:"#6b7a99",font:{size:11}},grid:{color:"#e2ddd5"}},y:{ticks:{color:"#6b7a99",font:{size:11},callback:v=>v.toLocaleString()+"万"},grid:{color:"#e2ddd5"}}}}});
 }
 refreshList(SK03);
-const sh03=JSON.parse(localStorage.getItem("fp_shared")||"{}");
+const sh03=JSON.parse(localStorage.getItem(FP_SHARED_KEY)||"{}");
 if(sh03.income)document.getElementById("income").value=Math.min(sh03.income,1200);
+if(sh03.clientName)document.getElementById("clientName").value=sh03.clientName;
 calc();
 
 </script>
 <script>
-fpSharedShowBanner(["income"]);
+fpSharedShowBanner(["clientName", "income"]);
 </script>
 </body>
 </html>
