@@ -292,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <header>
   <div><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ ライフプラン診断</div></div>
   <div class="header-btns">
+    <a href="fpnavi_home.html" class="btn-print" style="text-decoration:none;display:inline-block">🏠 ホーム</a>
     <button class="btn-save" onclick="saveData()">💾 保存</button>
     <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF出力</button>
@@ -434,7 +435,8 @@ function saveData(){
 }
 function loadSelected(){const key=document.getElementById("savedList").value;if(!key)return;const d=getSaves()[key];if(!d)return;document.getElementById("clientName").value=d.clientName||"";document.getElementById("clientDate").value=d.clientDate||"";document.getElementById("fpMemo").value=d.fpMemo||"";document.getElementById("age").value=d.age;document.getElementById("income").value=d.income;document.getElementById("expense").value=d.expense;document.getElementById("savings").value=d.savings;document.getElementById("rate").value=d.rate;document.getElementById("retire-exp").value=d.retireExp;document.getElementById("pension").value=d.pension;calc();showToast("📂 読み込みました："+key)}
 function deleteSelected(){const key=document.getElementById("savedList").value;if(!key)return;if(!confirm(key+" を削除しますか？"))return;const s=getSaves();delete s[key];localStorage.setItem(SK,JSON.stringify(s));refreshList();showToast("🗑️ 削除しました")}
-function exportPDF(){const name=document.getElementById("clientName").value||"ライフプラン診断";const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_ライフプラン診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>showToast("✅ PDF出力完了"))}
+function logActivity(type,meta){try{var key='fpnavi_activity_log';var log=JSON.parse(localStorage.getItem(key)||'[]');log.push(Object.assign({type:type,timestamp:Date.now()},meta||{}));if(log.length>500)log=log.slice(log.length-500);localStorage.setItem(key,JSON.stringify(log));}catch(e){}}
+function exportPDF(){const name=document.getElementById("clientName").value||"ライフプラン診断";const el=document.getElementById("report-area");const opt={margin:[8,8,8,8],filename:name+"_ライフプラン診断_FPナビ.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#f8f5ef"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};showToast("📄 PDF生成中...");html2pdf().set(opt).from(el).save().then(()=>{logActivity('pdf_created',{clientName:document.getElementById("clientName").value});showToast("✅ PDF出力完了");})}
 function gc(s){return s>=80?"#2a7a4f":s>=60?"#f39c12":"#c0392b"}
 function calc(){
   const age=parseInt(document.getElementById("age").value);
