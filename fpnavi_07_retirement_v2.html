@@ -81,7 +81,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -100,6 +100,14 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -246,7 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <body>
 <header>
   <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 老後資金診断</div></div>
-  <div class="badge">FP監修</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="fpnavi_home.html" style="color:#fff;text-decoration:none;font-size:12px;border:1px solid rgba(255,255,255,.4);padding:5px 12px;border-radius:4px">🏠 ホーム</a>
+    <div class="badge">FP監修</div>
+  </div>
 </header>
 <div class="hero">
   <div class="hero-eye">RETIREMENT FUND CALCULATOR</div>
@@ -270,6 +281,22 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 8 ／ 10</div>
+    <div class="progress-hero-title">老後資金診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <div class="section-title">試算結果</div>
+  <div id="badge-area"></div>
+  <div class="cards">
+    <div class="card"><div class="card-label">老後の年数</div><div class="card-val" id="retire-years"></div><div class="card-unit">年間</div></div>
+    <div class="card"><div class="card-label">月々の収支（老後）</div><div class="card-val" id="monthly-gap"></div><div class="card-unit">万円/月</div></div>
+    <div class="card"><div class="card-label">老後に必要な総資金</div><div class="card-val" id="need-total"></div><div class="card-unit">万円</div></div>
+    <div class="card" id="gap-card"><div class="card-label">不足額（目安）</div><div class="card-val" id="shortage"></div><div class="card-unit">万円</div></div>
+  </div>
+
   <div class="section-title">基本情報</div>
   <div class="row"><label>現在の年齢</label><input type="range" min="20" max="65" step="1" value="45" id="age" oninput="calc()"><span class="num" id="age-out">45歳</span></div>
   <div class="row"><label>退職予定年齢</label><input type="range" min="55" max="70" step="1" value="65" id="retire" oninput="calc()"><span class="num" id="retire-out">65歳</span></div>
@@ -282,15 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="row"><label>月々の生活費（老後）</label><input type="range" min="10" max="50" step="1" value="25" id="expense" oninput="calc()"><span class="num" id="expense-out">25万円</span></div>
   <div class="row"><label>公的年金の受給見込み（月）</label><input type="range" min="5" max="30" step="1" value="15" id="pension" oninput="calc()"><span class="num" id="pension-out">15万円</span></div>
   <div class="row"><label>その他収入（月・パート等）</label><input type="range" min="0" max="20" step="1" value="0" id="other" oninput="calc()"><span class="num" id="other-out">0万円</span></div>
-
-  <div class="section-title">試算結果</div>
-  <div id="badge-area"></div>
-  <div class="cards">
-    <div class="card"><div class="card-label">老後の年数</div><div class="card-val" id="retire-years"></div><div class="card-unit">年間</div></div>
-    <div class="card"><div class="card-label">月々の収支（老後）</div><div class="card-val" id="monthly-gap"></div><div class="card-unit">万円/月</div></div>
-    <div class="card"><div class="card-label">老後に必要な総資金</div><div class="card-val" id="need-total"></div><div class="card-unit">万円</div></div>
-    <div class="card" id="gap-card"><div class="card-label">不足額（目安）</div><div class="card-val" id="shortage"></div><div class="card-unit">万円</div></div>
-  </div>
 
   <div class="section-title">退職後のキャッシュフロー（5年ごと）</div>
   <table class="cashflow-table">
@@ -412,7 +430,25 @@ function calc() {
 calc();
 </script>
 <script>
-fpSharedShowBanner(["age", "income"]);
+fpSharedShowBanner(["clientName", "age", "income"]);
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+updateProgressHero(8);
 </script>
 </body>
 </html>
