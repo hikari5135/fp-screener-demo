@@ -78,7 +78,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -97,6 +97,14 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -243,7 +251,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <body>
 <header>
   <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ 教育費シミュレーター</div></div>
-  <div class="badge">FP監修</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="fpnavi_home.html" style="color:#fff;text-decoration:none;font-size:12px;border:1px solid rgba(255,255,255,.4);padding:5px 12px;border-radius:4px">🏠 ホーム</a>
+    <div class="badge">FP監修</div>
+  </div>
 </header>
 <div class="hero">
   <div class="hero-eye">EDUCATION COST SIMULATOR</div>
@@ -265,6 +276,23 @@ document.addEventListener('DOMContentLoaded', function() {
       <a class="fp-step" href="fpnavi_report.html"><span class="fp-step-circle">10</span><span class="fp-step-label">提案書作成</span></a>
     </div>
   </div>
+
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 4 ／ 10</div>
+    <div class="progress-hero-title">教育費シミュレーター</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <div class="section-title">試算結果</div>
+  <div id="badge-area"></div>
+  <div class="cards">
+    <div class="card"><div class="card-label">教育費の総額（1人）</div><div class="card-val" id="total1"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">教育費の総額（全員）</div><div class="card-val" id="totalAll"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">月平均の教育費</div><div class="card-val" id="monthly"></div><div class="card-unit">万円/月</div></div>
+    <div class="card accent"><div class="card-label">今から大学卒業まで</div><div class="card-val" id="remaining"></div><div class="card-unit">万円（残り分）</div></div>
+  </div>
+
   <div class="section-title">お子さんの情報</div>
   <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc()"><span class="num" id="age-out">0歳</span></div>
   <div class="row detail-only"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
@@ -275,15 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="row"><label>中学校</label><select id="middle" onchange="calc()"><option value="public" selected>公立中学校</option><option value="private">私立中学校</option></select></div>
   <div class="row"><label>高等学校</label><select id="high" onchange="calc()"><option value="public" selected>公立高校</option><option value="private">私立高校</option></select></div>
   <div class="row"><label>大学</label><select id="univ" onchange="calc()"><option value="public">国公立大学</option><option value="private_lit" selected>私立大学（文系）</option><option value="private_sci">私立大学（理系）</option><option value="private_med">私立大学（医歯薬系）</option></select></div>
-
-  <div class="section-title">試算結果</div>
-  <div id="badge-area"></div>
-  <div class="cards">
-    <div class="card"><div class="card-label">教育費の総額（1人）</div><div class="card-val" id="total1"></div><div class="card-unit">万円</div></div>
-    <div class="card"><div class="card-label">教育費の総額（全員）</div><div class="card-val" id="totalAll"></div><div class="card-unit">万円</div></div>
-    <div class="card"><div class="card-label">月平均の教育費</div><div class="card-val" id="monthly"></div><div class="card-unit">万円/月</div></div>
-    <div class="card accent"><div class="card-label">今から大学卒業まで</div><div class="card-val" id="remaining"></div><div class="card-unit">万円（残り分）</div></div>
-  </div>
 
   <div class="section-title">学校別の内訳</div>
   <table>
@@ -403,7 +422,25 @@ function calc() {
 calc();
 </script>
 <script>
-fpSharedShowBanner(["family"]);
+fpSharedShowBanner(["clientName", "family"]);
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+updateProgressHero(4);
 </script>
 </body>
 </html>
