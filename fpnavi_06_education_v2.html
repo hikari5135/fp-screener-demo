@@ -78,7 +78,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,.floating-status,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -105,6 +105,13 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
 .progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
 .progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
+/* ===== ここまで ===== */
+/* ===== フローティングステータス ===== */
+.floating-status{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:500;display:flex;gap:12px;align-items:center;border:1px solid rgba(200,169,110,.4)}
+.floating-status span{white-space:nowrap}
+.floating-status span:nth-child(2){color:var(--gold);font-weight:700}
+.floating-status span:nth-child(3){color:#5ec48a;font-weight:700}
+@media(max-width:600px){.floating-status{left:12px;right:12px;justify-content:space-between;font-size:10px;padding:8px 14px}}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -282,6 +289,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="progress-hero-title">教育費シミュレーター</div>
     <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
     <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+    <div class="progress-hero-bar" style="margin-top:12px"><div class="progress-hero-fill" id="completion-fill" style="background:#5ec48a"></div></div>
+    <div class="progress-hero-meta"><span id="completion-pct">入力完了率 0%</span><span></span></div>
+  </div>
+
+  <div class="floating-status" id="floating-status">
+    <span id="fs-step">STEP 4/10</span>
+    <span id="fs-remaining">残り約--分</span>
+    <span id="fs-completion">入力0%</span>
   </div>
 
   <div class="section-title">試算結果</div>
@@ -294,15 +309,15 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 
   <div class="section-title">お子さんの情報</div>
-  <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc()"><span class="num" id="age-out">0歳</span></div>
+  <div class="row"><label>現在のお子さんの年齢</label><input type="range" min="0" max="15" step="1" value="0" id="age" oninput="calc();trackTouch('age')"><span class="num" id="age-out">0歳</span></div>
   <div class="row detail-only"><label>お子さんの人数</label><input type="range" min="1" max="4" step="1" value="1" id="children" oninput="calc()"><span class="num" id="children-out">1人</span></div>
 
   <div class="section-title">学校の種別を選択</div>
-  <div class="row"><label>幼稚園・保育園</label><select id="kinder" onchange="calc()"><option value="public">公立（認可保育所）</option><option value="private" selected>私立幼稚園</option></select></div>
-  <div class="row"><label>小学校</label><select id="elem" onchange="calc()"><option value="public" selected>公立小学校</option><option value="private">私立小学校</option></select></div>
-  <div class="row"><label>中学校</label><select id="middle" onchange="calc()"><option value="public" selected>公立中学校</option><option value="private">私立中学校</option></select></div>
-  <div class="row"><label>高等学校</label><select id="high" onchange="calc()"><option value="public" selected>公立高校</option><option value="private">私立高校</option></select></div>
-  <div class="row"><label>大学</label><select id="univ" onchange="calc()"><option value="public">国公立大学</option><option value="private_lit" selected>私立大学（文系）</option><option value="private_sci">私立大学（理系）</option><option value="private_med">私立大学（医歯薬系）</option></select></div>
+  <div class="row"><label>幼稚園・保育園</label><select id="kinder" onchange="calc();trackTouch('kinder')"><option value="public">公立（認可保育所）</option><option value="private" selected>私立幼稚園</option></select></div>
+  <div class="row"><label>小学校</label><select id="elem" onchange="calc();trackTouch('elem')"><option value="public" selected>公立小学校</option><option value="private">私立小学校</option></select></div>
+  <div class="row"><label>中学校</label><select id="middle" onchange="calc();trackTouch('middle')"><option value="public" selected>公立中学校</option><option value="private">私立中学校</option></select></div>
+  <div class="row"><label>高等学校</label><select id="high" onchange="calc();trackTouch('high')"><option value="public" selected>公立高校</option><option value="private">私立高校</option></select></div>
+  <div class="row"><label>大学</label><select id="univ" onchange="calc();trackTouch('univ')"><option value="public">国公立大学</option><option value="private_lit" selected>私立大学（文系）</option><option value="private_sci">私立大学（理系）</option><option value="private_med">私立大学（医歯薬系）</option></select></div>
 
   <div class="section-title">学校別の内訳</div>
   <table>
@@ -439,8 +454,36 @@ function updateProgressHero(stepIndex) {
   var perStep = meetingMinutes / TOTAL_STEPS;
   var remaining = Math.max(1, Math.round(perStep * remainingSteps));
   remEl.textContent = '残り約 ' + remaining + ' 分';
+
+  var fsStep = document.getElementById('fs-step');
+  var fsRem = document.getElementById('fs-remaining');
+  if (fsStep) fsStep.textContent = 'STEP ' + stepIndex + '/10';
+  if (fsRem) fsRem.textContent = '残り約' + remaining + '分';
 }
 updateProgressHero(4);
+
+// ===== 入力完了率トラッキング =====
+var TRACKED_FIELDS = ['age','kinder','elem','middle','high','univ'];
+var touchedFields = new Set();
+
+function trackTouch(id) {
+  touchedFields.add(id);
+  updateCompletion();
+}
+
+function updateCompletion() {
+  var total = TRACKED_FIELDS.length;
+  var done = TRACKED_FIELDS.filter(function(id){ return touchedFields.has(id); }).length;
+  var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  var fillEl = document.getElementById('completion-fill');
+  var pctEl = document.getElementById('completion-pct');
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = '入力完了率 ' + pct + '%';
+  var fsEl = document.getElementById('fs-completion');
+  if (fsEl) fsEl.textContent = '入力' + pct + '%';
+}
+updateCompletion();
+// ===== ここまで =====
 </script>
 </body>
 </html>
