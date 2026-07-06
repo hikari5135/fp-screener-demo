@@ -84,7 +84,7 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .pdf-header-client{text-align:right;font-size:12px}
 .pdf-header-client strong{font-size:15px;color:#1a2744;display:block}
 @media print{
-  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
+  header,.header-btns,.client-box,.fp-settings,.mode-switch,.fp-stepper,.progress-hero,footer,.toast,.shared-banner,.closing-box,.ai-edit-btn,.ai-editor,.next-action-box{display:none!important}
   body{background:#fff!important}
   .main{padding:0!important}
   .pdf-header{display:flex!important}
@@ -103,6 +103,14 @@ footer { background:var(--navy); color:rgba(255,255,255,0.5); font-size:11px; te
 .fp-step.done .fp-step-label{color:var(--navy);font-weight:500}
 .fp-step.current .fp-step-label{color:var(--navy);font-weight:700}
 .fp-step.disabled{cursor:default;opacity:.45;pointer-events:none}
+/* ===== ここまで ===== */
+/* ===== 進捗ヒーロー ===== */
+.progress-hero{background:linear-gradient(135deg,var(--navy),#243460);border-radius:14px;padding:22px 26px;margin-bottom:20px;color:#fff;text-align:center}
+.progress-hero-step{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:6px;font-weight:700}
+.progress-hero-title{font-family:"Noto Serif JP",serif;font-size:22px;margin-bottom:14px}
+.progress-hero-bar{background:rgba(255,255,255,.15);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px}
+.progress-hero-fill{background:var(--gold);height:100%;border-radius:6px;transition:width .4s;width:0%}
+.progress-hero-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75)}
 /* ===== ここまで ===== */
 </style>
 <script>
@@ -249,7 +257,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <body>
 <header>
   <div class="logo"><div class="brand-name">FPナビ</div><div class="brand-sub">LIFE PLANNING SUITE ／ NISA試算診断</div></div>
-  <div class="badge">FP監修</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="fpnavi_home.html" style="color:#fff;text-decoration:none;font-size:12px;border:1px solid rgba(255,255,255,.4);padding:5px 12px;border-radius:4px">🏠 ホーム</a>
+    <div class="badge">FP監修</div>
+  </div>
 </header>
 <div class="hero">
   <div class="hero-eye">NISA SIMULATOR</div>
@@ -273,6 +284,22 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <div class="progress-hero">
+    <div class="progress-hero-step">STEP 7 ／ 10</div>
+    <div class="progress-hero-title">NISA試算診断</div>
+    <div class="progress-hero-bar"><div class="progress-hero-fill" id="progress-fill"></div></div>
+    <div class="progress-hero-meta"><span id="progress-pct">進捗 --%</span><span id="progress-remaining">残り約 -- 分</span></div>
+  </div>
+
+  <div class="section-title">試算結果</div>
+  <div class="cards">
+    <div class="card"><div class="card-label">積立元本（合計）</div><div class="card-val" id="principal"></div><div class="card-unit">万円</div></div>
+    <div class="card accent"><div class="card-label">NISA運用後の資産</div><div class="card-val" id="nisa-total"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">運用益（非課税）</div><div class="card-val" id="gain"></div><div class="card-unit">万円</div></div>
+    <div class="card"><div class="card-label">非課税メリット</div><div class="card-val" id="tax-benefit"></div><div class="card-unit">万円（税金の節約）</div></div>
+  </div>
+  <div class="tax-save" id="tax-save-msg"></div>
+
   <div class="nisa-info">
     <strong>新NISA（2024年〜）の概要</strong>
     <div class="nisa-grid">
@@ -294,16 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="row"><label>つみたて投資枠（月額）</label><input type="range" min="0" max="10" step="0.5" value="3" id="tsumitate" oninput="calc()"><span class="num" id="tsumitate-out">3.0万円</span></div>
   <div class="row detail-only"><label>成長投資枠（年額）</label><input type="range" min="0" max="240" step="12" value="0" id="growth" oninput="calc()"><span class="num" id="growth-out">0万円</span></div>
   <div class="row"><label>想定年利回り</label><input type="range" min="1" max="10" step="0.5" value="5" id="rate" oninput="calc()"><span class="num" id="rate-out">5.0%</span></div>
-
-  <div class="section-title">試算結果</div>
-  <div class="cards">
-    <div class="card"><div class="card-label">積立元本（合計）</div><div class="card-val" id="principal"></div><div class="card-unit">万円</div></div>
-    <div class="card accent"><div class="card-label">NISA運用後の資産</div><div class="card-val" id="nisa-total"></div><div class="card-unit">万円</div></div>
-    <div class="card"><div class="card-label">運用益（非課税）</div><div class="card-val" id="gain"></div><div class="card-unit">万円</div></div>
-    <div class="card"><div class="card-label">非課税メリット</div><div class="card-val" id="tax-benefit"></div><div class="card-unit">万円（税金の節約）</div></div>
-  </div>
-
-  <div class="tax-save" id="tax-save-msg"></div>
 
   <div class="section-title">NISA vs 課税口座の比較</div>
   <div class="compare-grid">
@@ -437,7 +454,25 @@ function calc() {
 calc();
 </script>
 <script>
-fpSharedShowBanner(["age"]);
+fpSharedShowBanner(["clientName", "age"]);
+// ===== 進捗・残り時間表示 =====
+function updateProgressHero(stepIndex) {
+  var pctEl = document.getElementById('progress-pct');
+  var fillEl = document.getElementById('progress-fill');
+  var remEl = document.getElementById('progress-remaining');
+  if (!pctEl || !fillEl || !remEl) return;
+  var TOTAL_STEPS = 10;
+  var pct = Math.round(((stepIndex - 1) / TOTAL_STEPS) * 100);
+  pctEl.textContent = '進捗 ' + pct + '%';
+  fillEl.style.width = pct + '%';
+  var shared = fpSharedLoad();
+  var meetingMinutes = parseInt(shared.meetingMinutes) || 60;
+  var remainingSteps = TOTAL_STEPS - stepIndex + 1;
+  var perStep = meetingMinutes / TOTAL_STEPS;
+  var remaining = Math.max(1, Math.round(perStep * remainingSteps));
+  remEl.textContent = '残り約 ' + remaining + ' 分';
+}
+updateProgressHero(7);
 </script>
 </body>
 </html>
